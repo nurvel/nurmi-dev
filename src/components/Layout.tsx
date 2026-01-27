@@ -30,7 +30,6 @@ export default function Layout({ children }: LayoutProps) {
     <SectionScrollProvider value={{ activeSection }}>
       <AppContainer>
         <GlobalStyle />
-        <Header />
         <SectionStack>{children}</SectionStack>
       </AppContainer>
     </SectionScrollProvider>
