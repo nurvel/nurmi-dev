@@ -1,7 +1,6 @@
 import React, { ReactNode } from "react";
 import styled from "styled-components";
 import GlobalStyle from "../common/globalStyles";
-import Header from "./Header";
 import { useScrollSnap } from "../hooks/useScrollSnap";
 import { SectionScrollProvider } from "../context/SectionScrollContext";
 
