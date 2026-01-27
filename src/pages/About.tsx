@@ -109,7 +109,7 @@ export default function About() {
       <Content>
         <ProfileCard
           name="Veli-Pekka Nurmi"
-          subtitle="Bridging product & engineering with AI-augmented development"
+          subtitle="I work with software systems from problem framing to production."
           avatarSrc={ProfilePic}
           avatarAlt="Veli-Pekka Nurmi"
         />
@@ -124,7 +124,7 @@ export default function About() {
 
         <RolesList
           roles={[
-            "Product Owner",
+            "Technical Product Owner",
             "Full-Stack Developer",
             "Head of R&D",
             "Performance Marketer",
@@ -140,7 +140,11 @@ export default function About() {
             a tool for implementation while human expertise guides strategic
             direction, requirements engineering, and solution architecture. My
             background in both business and technology positions me well for
-            this shift.
+            this shift. Working at{" "}
+            <a href="https://nitor.com/en" target="_blank">
+              Nitor
+            </a>{" "}
+            as senior software developer.
           </FocusContent>
         </Focus>
         <Focus>
