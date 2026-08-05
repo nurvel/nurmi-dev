@@ -150,6 +150,13 @@ describe("About page characterization", () => {
       expect(websiteLink).toHaveAttribute("target", "_blank");
     });
 
+    it('renders the exact curly-quote SEO claim "#1 ranking for \u201CKosmetologi Järvenpää\u201D"', () => {
+      // Regression: ensure U+201C/U+201D (curly left/right double quotes) are preserved.
+      expect(document.body.textContent).toContain(
+        '#1 ranking for \u201CKosmetologi J\u00e4rvenp\u00e4\u00e4\u201D'
+      );
+    });
+
     it("renders exactly four recent work items", () => {
       const titles = [
         "Contract monitoring system",

@@ -95,7 +95,7 @@ export const aboutSiteContent: AboutSiteContent = {
       textA: " for ",
       linkLabel: "Kauneushoitola Hanna",
       linkHref: "https://kauneushoitolahanna.fi",
-      textB: ' — created and optimised a site for a local beauty salon. Achieved #1 ranking for "Kosmetologi J\u00e4rvenp\u00e4\u00e4".',
+      textB: ' — created and optimised a site for a local beauty salon. Achieved #1 ranking for \u201CKosmetologi J\u00e4rvenp\u00e4\u00e4\u201D.',
     },
   ],
   contacts: [
