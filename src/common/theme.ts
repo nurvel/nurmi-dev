@@ -10,6 +10,11 @@ const theme = {
     textPrimary: "#FFFFFF",
     background: "#050110",
     headingShadow: "hsl(9000 50% 20%)",
+    // About page tokens — reused across About sub-components
+    aboutAccent: "#e91e8c",
+    aboutAccentGlow: "rgba(233, 30, 140, 0.2)",
+    aboutTextPrimary: "#1a1a1a",
+    aboutUnderlineEnd: "#8b5cf6",
   },
   typography: {
     family: '"Roboto Condensed", sans-serif',

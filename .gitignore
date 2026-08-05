@@ -11,6 +11,9 @@
 # production
 /build
 
+# build check output (local only)
+/.build-check
+
 # misc
 .DS_Store
 /target
