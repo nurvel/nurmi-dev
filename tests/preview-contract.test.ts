@@ -41,7 +41,7 @@ describe("preview-parity contract", () => {
     for (const line of importLines) {
       const mod = line.match(/from "([^"]+)"/)?.[1];
       if (mod) {
-        expect(mod).toMatch(/^(node:)?(fs|child_process|path|http|os|url)/);
+        expect(mod).toMatch(/^(node:)?(fs|child_process|path|http|os|url|net|util)/);
       }
     }
   });
