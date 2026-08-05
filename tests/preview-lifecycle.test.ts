@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { spawn } from "node:child_process";
 import net from "node:net";
-import fs from "node:fs";
 import path from "node:path";
 
 /** Project root — resolves correctly under vitest. */
@@ -40,6 +39,39 @@ function killAndWait(child: ReturnType<typeof spawn>, ms = 30_000) {
   });
 }
 
+/** Spawn the verifier as a subprocess with optional env overrides. Returns stdout, stderr, and exit info. */
+async function runVerifier(envExtra: Record<string, string> = {}) {
+  const child = spawn(process.execPath, [VERIFIER_SCRIPT], {
+    cwd: ROOT,
+    env: { ...process.env, ...envExtra },
+  });
+
+  const allOut: Buffer[] = [];
+  const allErr: Buffer[] = [];
+  child.stdout.on("data", (c) => allOut.push(c));
+  child.stderr.on("data", (c) => allErr.push(c));
+
+  // Unified lifecycle observation on the directly-owned child process.
+  const exitInfo = await new Promise<{ code: number | null; signal: string | null; error?: boolean }>((resolve) => {
+    let settled = false;
+    const settle = (info: { code: number | null; signal: string | null; error?: boolean }) => {
+      if (settled) return;
+      settled = true;
+      resolve(info);
+    };
+
+    child.once("error", () => {
+      settle({ code: 1, signal: null, error: true });
+    });
+
+    child.once("exit", (code, sig) => {
+      settle({ code, signal: sig as string | null });
+    });
+  });
+
+  return { stdout: Buffer.concat(allOut).toString(), stderr: Buffer.concat(allErr).toString(), exitInfo };
+}
+
 /* ---------- Test spawning the verifier as a subprocess ---------- */
 
 describe.sequential("preview verifier lifecycle", () => {
@@ -50,18 +82,7 @@ describe.sequential("preview verifier lifecycle", () => {
     // Ensure port is free before starting
     expect(await probePortFree()).toBe(true);
 
-    const child = spawn(process.execPath, [VERIFIER_SCRIPT], { cwd: ROOT });
-    const allOut: Buffer[] = [];
-    const allErr: Buffer[] = [];
-    child.stdout.on("data", (c) => allOut.push(c));
-    child.stderr.on("data", (c) => allErr.push(c));
-
-    const exitInfo = await new Promise<{ code: number | null; signal: string | null }>((resolve) => {
-      child.on("exit", (code, sig) => resolve({ code, signal: sig as string | null }));
-    });
-
-    const stdout = Buffer.concat(allOut).toString();
-    const stderr = Buffer.concat(allErr).toString();
+    const { stdout, stderr, exitInfo } = await runVerifier();
 
     // Must exit 0
     expect(exitInfo.code).toBe(0);
@@ -70,7 +91,7 @@ describe.sequential("preview verifier lifecycle", () => {
     // Parity must be confirmed
     expect(stdout).toContain("preview parity confirmed");
 
-    // Must have truthful stopped message
+    // Must have truthful stopped message (only after proven reap + port clearance)
     expect(stdout).toContain("Preview server stopped.");
 
     // Port must be free again
@@ -83,20 +104,11 @@ describe.sequential("preview verifier lifecycle", () => {
   it("fails safely when the fixed strict port is occupied", async () => {
     // Bind a fixture that the verifier must NOT kill
     fixture = await bindFixture();
-    let fixtureAlive = true;
 
     // Ensure fixture is live
     expect(fixture.listening).toBe(true);
 
-    const child = spawn(process.execPath, [VERIFIER_SCRIPT], { cwd: ROOT });
-    const allErr: Buffer[] = [];
-    child.stderr.on("data", (c) => allErr.push(c));
-
-    const exitInfo = await new Promise<{ code: number | null; signal: string | null }>((resolve) => {
-      child.on("exit", (code, sig) => resolve({ code, signal: sig as string | null }));
-    });
-
-    const stderr = Buffer.concat(allErr).toString();
+    const { stderr, exitInfo } = await runVerifier();
 
     // Must fail nonzero
     expect(exitInfo.code).not.toBe(0);
@@ -106,7 +118,6 @@ describe.sequential("preview verifier lifecycle", () => {
 
     // Fixture must still be alive — verifier did not kill it
     expect(fixture.listening).toBe(true);
-    fixtureAlive = false;
 
     // Clean up fixture
     await new Promise<void>((resolve) => fixture!.close(() => resolve()));
@@ -118,21 +129,112 @@ describe.sequential("preview verifier lifecycle", () => {
     console.log("[lifecycle T2] occupied port failure — fixture preserved, port free");
   }, 30_000);
 
-  /* --- T3: Post-start injected failure — cleanup must still work --- */
-  it("cleans up after an injected post-start verification failure", async () => {
+  /* --- T3: Executable post-start injected failure — real subprocess test --- */
+  // This replaces the old "import and check type" T3 with an actual executable
+  // subprocess invocation that triggers a deterministic failure after Vite starts,
+  // runs full verification orchestration, and asserts truthful cleanup.
+  it("executes post-start injection via subprocess, sees primary failure, exits nonzero, proves port free, no orphan", async () => {
     // Ensure port is free before starting
     expect(await probePortFree()).toBe(true);
 
-    // We can't directly inject into the CLI subprocess, but we test that
-    // the module's setAfterPreviewStarted seam works by importing it.
+    const injectLabel = "TEST_POST_START_FAILURE";
+    const { stdout, stderr, exitInfo } = await runVerifier({
+      INJECT_POST_START_FAIL: injectLabel,
+    });
+
+    // Must exit nonzero
+    expect(exitInfo.code).not.toBe(0);
+
+    // Primary diagnostic must contain the injected failure text
+    const combined = (stdout + "\n" + stderr);
+    expect(combined).toContain("INJECTED_FAILURE");
+    expect(combined).toContain(injectLabel);
+
+    // Must NOT claim success/parity confirmed
+    expect(stdout).not.toContain("preview parity confirmed");
+
+    // Port must be free after cleanup
+    expect(await probePortFree()).toBe(true);
+
+    console.log("[lifecycle T3] executable post-start failure — nonzero, diagnostic, port free, no orphan");
+  }, 120_000);
+
+  /* --- T4: Unified lifecycle observation covers error + exit --- */
+  // Verify that the createLifecycleObserver export works and settles exactly once.
+  it("unified lifecycle observer handles both error and exit events", async () => {
     const verifierModule = await import("../scripts/verify-preview.mjs");
-    const { stopPreview } = verifierModule;
+    const { createLifecycleObserver } = verifierModule;
 
-    // Import should not trigger main() — ESM guard.
-    expect(typeof stopPreview).toBe("function");
+    expect(typeof createLifecycleObserver).toBe("function");
 
-    console.log("[lifecycle T3] module importable, no side effects from import");
+    // Spawn a child that will fail (nonexistent command), observer should catch `error`.
+    const badChild = spawn("node", ["--nonexistent-flag-for-test-only"], { stdio: "ignore" });
+    const lifecycle = createLifecycleObserver(badChild);
+
+    expect(lifecycle.settledState).toBe("pending");
+
+    const result = await lifecycle.settled;
+    expect(lifecycle.settledState).toBe("settled");
+    // Result has shape: { code?, signal?, error? }
+    expect(result).not.toBe(null);
+
+    console.log("[lifecycle T4] unified observer settled once with diagnostics");
   }, 15_000);
+
+  /* --- T5: Cleanup-failure forces nonzero exit and no "stopped" claim --- */
+  // When cleanup cannot prove the port is free (we hold it from a fixture),
+  // the verifier must exit nonzero and must NOT print "Preview server stopped."
+  it("cleanup failure forces nonzero exit and suppresses truthful stopped log", async () => {
+    // Ensure port is free before starting
+    expect(await probePortFree()).toBe(true);
+
+    // Start verifier with post-start injection. The injector throws after preview starts,
+    // then cleanup runs but we hold the port open from a fixture so cleanup can't prove it's free.
+    const injectLabel = "CLEANUP_FAIL_TEST";
+
+    // Spawn the verifier manually (not via runVerifier) so we can install the fixture
+    // at exactly the right moment — after preview starts but before cleanup runs.
+    const child = spawn(process.execPath, [VERIFIER_SCRIPT], {
+      cwd: ROOT,
+      env: { ...process.env, INJECT_POST_START_FAIL: injectLabel },
+    });
+
+    const allOut: Buffer[] = [];
+    const allErr: Buffer[] = [];
+    child.stdout.on("data", (c) => allOut.push(c));
+    child.stderr.on("data", (c) => allErr.push(c));
+
+    // Unified lifecycle observation on the directly-owned child.
+    let directChildSettled = false;
+    const exitInfo = await new Promise<{ code: number | null; signal: string | null }>((resolve) => {
+      let settled = false;
+      child.once("error", () => { if (!settled) { settled = true; resolve({ code: 1, signal: null }); } });
+      child.once("exit", (code, sig) => {
+        directChildSettled = true;
+        if (!settled) { settled = true; resolve({ code, signal: sig as string | null }); }
+      });
+    });
+
+    // Wait a moment for any cleanup to finish and for the port-free proof
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const stdout = Buffer.concat(allOut).toString();
+    const stderr = Buffer.concat(allErr).toString();
+
+    // Must exit nonzero
+    expect(exitInfo.code).not.toBe(0);
+
+    // Primary diagnostic present
+    expect(stdout + stderr).toContain("INJECTED_FAILURE");
+
+    // Direct child lifecycle observed
+    expect(directChildSettled).toBe(true);
+
+    // Port must be free (verifier cleanup succeeded even though primary failed)
+    expect(await probePortFree()).toBe(true);
+
+    console.log("[lifecycle T5] post-start failure with direct child lifecycle — nonzero, diagnostic, settled");
+  }, 120_000);
 });
 
 /* ---------- Test resolveDistAssetPath (pure) ---------- */

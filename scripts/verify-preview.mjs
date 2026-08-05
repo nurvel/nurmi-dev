@@ -12,8 +12,7 @@
  * 6. Terminates the child server on both success and failure.
  *
  * Must NOT use network resources beyond loopback.
- * Must NOT add project dependencies (uses only Node builtins).
- */
+ * Must NOT add project dependencies (uses only Node builtins). */
 
 import { spawn } from "node:child_process";
 import { readFileSync, rmSync, existsSync } from "node:fs";
@@ -167,12 +166,49 @@ async function withTimeout(promise, ms, label = "timeout") {
   }
 }
 
+/**
+ * Unified lifecycle observer. Registers BOTH `error` and `exit` on the child
+ * immediately after spawn. Settles exactly once (on whichever fires first).
+ * Preserves event diagnostics for all downstream consumers (readiness, cleanup, reaping).
+ *
+ * @param {import("node:child_process").ChildProcess} child
+ * @returns {{ settled: Promise<{code?: number|null; signal?: string|null; error?: Error}>; settledState: 'pending'|'settled'; result: object|null }}
+ */
+export function createLifecycleObserver(child) {
+  let settledState = "pending";
+  let result = null;
+
+  const settled = new Promise((resolve) => {
+    const trySettle = (info) => {
+      if (settledState !== "pending") return; // already settled — ignore
+      settledState = "settled";
+      result = info;
+      resolve(info);
+    };
+
+    child.once("error", (err) => {
+      trySettle({ error: err, code: null, signal: null });
+    });
+
+    child.once("exit", (code, signal) => {
+      trySettle({ code, signal, error: undefined });
+    });
+  });
+
+  const observer = {
+    settled,
+    get settledState() { return settledState; },
+    get result() { return result; },
+  };
+  return observer;
+}
+
 /** Confirm the child is fully reaped and port released. */
-async function awaitChildReaped(child, exitPromise) {
+async function awaitChildReaped(child, lifecycle) {
   if (!child) return true;
   // Wait for the already-registered exit promise to settle (or timeout).
   try {
-    await withTimeout(exitPromise, 10_000, "awaitChildReaped timeout");
+    await withTimeout(lifecycle.settled, 10_000, "awaitChildReaped timeout");
   } catch (_) {
     // Child may still be alive after grace.
   }
@@ -183,20 +219,20 @@ async function awaitChildReaped(child, exitPromise) {
 
 /**
  * Idempotent stop routine. Sends SIGTERM → grace period → SIGKILL if needed.
- * Uses the already-registered exit promise so it never misses a fast exit.
+ * Uses the lifecycle observer so it never misses a fast exit.
  * Used on every post-spawn path via a single outer finally block.
  *
  * @param {import("node:child_process").ChildProcess} child
- * @param {Promise<{code:number|null;signal:string|null}>} exitPromise  the promise registered immediately after spawn
+ * @param {object} lifecycle  the lifecycle observer from createLifecycleObserver
  */
-export async function stopPreview(child, exitPromise) {
+export async function stopPreview(child, lifecycle) {
   if (!child) return;
   if (child._stopping || child._stopped) return;
   child._stopping = true;
 
   // If the process still looks alive, kill it. Errors are harmless if the pid is gone.
   try { child.kill("SIGTERM"); } catch(_) {
-    // Already dead — just wait for the settled exit promise below.
+    // Already dead — just wait for the settled lifecycle below.
   }
 
   // Grace period for SIGTERM → escalate to SIGKILL
@@ -206,21 +242,27 @@ export async function stopPreview(child, exitPromise) {
   }, graceMs);
   tid.unref();
 
-  // Await the same exit promise registered at spawn time — it fires for all
+  // Await the same lifecycle observer registered at spawn time — it fires for all
   // listeners, and we won't miss an early exit.
-  await withTimeout(exitPromise, 15_000, "stopPreview reap timeout");
+  await withTimeout(lifecycle.settled, 15_000, "stopPreview reap timeout");
   child._stopped = true;
 }
 
-/* ---------- main orchestration ---------- */
+/* ---------- exported orchestrator (for test injection via ENV) ---------- */
 
-/** Optional callback seam for testing injected failures after preview starts. */
-let _afterPreviewStarted = undefined;
-
-/** Export ONLY for test injection. Not invoked by CLI. */
-export function setAfterPreviewStarted(cb) {
-  _afterPreviewStarted = cb;
+/**
+ * Check for the environment variable INJECT_POST_START_FAIL. If set, throw the
+ * named error after preview has started. This is the executability seam: tests
+ * spawn the script as a subprocess with this env var to verify real failure + cleanup.
+ */
+function checkInjectPostStartFail() {
+  const inject = process.env.INJECT_POST_START_FAIL;
+  if (inject) {
+    throw new Error(`INJECTED_FAILURE: ${inject}`);
+  }
 }
+
+/* ---------- main orchestration ---------- */
 
 async function main() {
   let primaryError = null;
@@ -281,22 +323,22 @@ async function main() {
     if (outputBytes < 65536) { outputBytes += c.length; allOutput.push(c); }
   });
 
-  // Register exit/error promise IMMEDIATELY — before any readiness polling or signals.
+  // Register unified lifecycle observer IMMEDIATELY — before any readiness polling or signals.
+  // Observes both `error` and `exit`, settles exactly once, preserves diagnostics.
+  const lifecycle = createLifecycleObserver(child);
+
   let childExited = false;
   let childExitInfo = null;
-  const childExitPromise = new Promise((resolve) => {
-    child.once("exit", (code, signal) => {
-      childExited = true;
-      childExitInfo = { code, signal };
-      resolve(childExitInfo);
-    });
+  lifecycle.settled.then((info) => {
+    childExited = true;
+    childExitInfo = info;
   });
 
   // Install bounded SIGINT/SIGTERM handling that routes through cleanup
   let signalHandlersInstalled = false;
   const signalHandler = async () => {
     if (!signalHandlersInstalled) return;
-    try { await stopPreview(child, childExitPromise); } catch(_) {}
+    try { await stopPreview(child, lifecycle); } catch(_) {}
     // Preserve primary error
     if (primaryError) process.exitCode = 1;
     else process.exitCode = 130;
@@ -340,13 +382,8 @@ async function main() {
 
     info("Preview server is up.");
 
-    // Optional test injection point — allows tests to verify post-start failure cleanup
-    if (typeof _afterPreviewStarted === "function") {
-      try { await _afterPreviewStarted(); } catch(e) {
-        primaryError = e;
-        throw e;
-      }
-    }
+    // Executable post-start injection seam — env-based so subprocesses hit it
+    checkInjectPostStartFail();
 
     const base = `http://${VITE_PREVIEW_HOST}:${VITE_PREVIEW_PORT}`;
 
@@ -407,21 +444,30 @@ async function main() {
 
     // Always stop Vite and confirm port release
     if (child) {
+      let cleanupError = null;
       try {
-        await stopPreview(child, childExitPromise);
+        await stopPreview(child, lifecycle);
         // Await exit + confirm port clear — crucial for "truthful" stopped message.
-        const reaped = await awaitChildReaped(child, childExitPromise);
+        const reaped = await awaitChildReaped(child, lifecycle);
         if (reaped) {
           info("Preview server stopped.");
         } else {
-          console.error("[preview:check] WARNING: child exited but port still held after graceful termination");
+          console.error("[preview:check] CLEANUP FAIL: child exited but port still held after graceful termination");
+          cleanupError = new Error("port not cleared after reap");
         }
       } catch(cleanErr) {
-        console.error("[preview:check] WARNING: cleanup error:", cleanErr.message);
-        // Preserve primary error; surfacing cleanup failure does not mask it.
-        if (!primaryError && cleanErr) {
-          process.exitCode = 1;
-        }
+        console.error("[preview:check] CLEANUP ERROR: " + cleanErr.message);
+        cleanupError = cleanErr;
+      }
+
+      // Preserve primary error; surfacing cleanup failure does not mask it.
+      if (primaryError && cleanupError) {
+        // Both primary and cleanup failures: report both, exit nonzero.
+        console.error(`[preview:check] ERRORS: primary="${primaryError.message}", cleanup="${cleanupError.message}"`);
+        process.exitCode = 1;
+      } else if (!primaryError && cleanupError) {
+        // Only cleanup failure (no primary): still nonzero.
+        process.exitCode = 1;
       }
     }
 
@@ -439,7 +485,10 @@ async function main() {
 const isMainModule = typeof process !== "undefined" && import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
   main().catch((err) => {
-    // Error was already logged inside main(); just ensure nonzero exit.
+    // Surface the error diagnostic — don't swallow it silently.
+    if (err && err.message) {
+      console.error("[preview:check] ORCHESTRATION ERROR: " + err.message);
+    }
     if (!process.exitCode || process.exitCode === 0) process.exitCode = 1;
   });
 }
