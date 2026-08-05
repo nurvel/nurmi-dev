@@ -468,6 +468,10 @@ async function main() {
     info(`Asset ${assetMatch[1]} parity OK (${builtAsset.length} bytes)`);
 
     parityConfirmed = true;
+  } catch (err) {
+    primaryError = err instanceof Error ? err : new Error(String(err));
+    console.error(`[preview:check] PRIMARY ERROR: ${primaryError.message}`);
+    process.exitCode = 1;
   } finally {
     // Remove signal handlers so they don't leak
     try { process.off("SIGINT", signalHandler); } catch(_) {}
@@ -493,12 +497,13 @@ async function main() {
 
         reapingResult = await awaitChildReaped(child, lifecycle);
 
-        if (reapingResult.fullyStopped) {
-          // Only emit truthful stopped message when process AND port both proven.
-          info("Preview server stopped.");
-        } else {
+        if (!reapingResult.fullyStopped) {
           console.error("[preview:check] CLEANUP FAIL: child exited but port still held after graceful termination");
           cleanupError = new Error("port not cleared after reap");
+        } else if (!primaryError) {
+          // Only emit truthful stopped message when process and port are proven
+          // and the orchestration itself succeeded.
+          info("Preview server stopped.");
         }
       } catch(cleanErr) {
         console.error("[preview:check] CLEANUP ERROR: " + cleanErr.message);

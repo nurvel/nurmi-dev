@@ -175,6 +175,7 @@ describe.sequential("preview verifier lifecycle", () => {
 
     // Must NOT claim success/parity confirmed
     expect(stdout).not.toContain("preview parity confirmed");
+    expect(stdout).not.toContain("Preview server stopped.");
 
     // Lifecycle report: must be present and prove owned-child lifecycle
     const report = parseLifecycleReport(stdout);
@@ -240,6 +241,7 @@ describe.sequential("preview verifier lifecycle", () => {
 
     // Observer: exactly one successful settlement
     expect(lifecycle).toHaveProperty('settledState', 'settled');
+    expect(lifecycle.settlementCount).toBe(1);
 
     // Await child close to ensure full reaping
     await new Promise<void>((resolve) => {
@@ -284,6 +286,8 @@ describe.sequential("preview verifier lifecycle", () => {
     expect(report!.event).toBe("exit");
     expect(Number(report!.settlementCount)).toBe(1);
     expect(report!.processSettled).toBe(true);
+    expect(report!.portFree).toBe(false);
+    expect(report!.fullyStopped).toBe(false);
 
     // After the verifier closes its own fixture, independent port must be free
     expect(await probePortFree()).toBe(true);
@@ -314,12 +318,11 @@ describe.sequential("preview verifier lifecycle", () => {
     // Cleanup diagnostic present (port clearance failure)
     expect(allOutput.toLowerCase()).toMatch(/cleanup|port.*hold|clearance/i);
 
-    // Combined ERRORS line preserving both
-    expect(allOutput).toMatch(/ERRORS?.*primary/i);
-    expect(allOutput).toContain("COMBINED_PRIMARY_FAILURE");
-    // The combined line should reference both primary and cleanup
-    const combinedErrorsLine = allOutput.split('\n').find(l => l.match(/ERRORS?/i) && l.toLowerCase().includes('primary'));
+    // Exact combined ERRORS line preserving both distinct failures
+    const combinedErrorsLine = allOutput.split('\n').find(l => l.startsWith('[preview:check] ERRORS:'));
     expect(combinedErrorsLine).toBeTruthy();
+    expect(combinedErrorsLine).toContain('primary="INJECTED_FAILURE: COMBINED_PRIMARY_FAILURE"');
+    expect(combinedErrorsLine).toContain('cleanup="port not cleared after reap"');
 
     // Must NOT emit final success or stopped log
     expect(stdout).not.toContain("preview parity confirmed");
@@ -331,6 +334,9 @@ describe.sequential("preview verifier lifecycle", () => {
     expect(Number(report!.pid)).toBeGreaterThan(0);
     expect(report!.event).toBe("exit");
     expect(Number(report!.settlementCount)).toBe(1);
+    expect(report!.processSettled).toBe(true);
+    expect(report!.portFree).toBe(false);
+    expect(report!.fullyStopped).toBe(false);
 
     // Independent port probe is free after verifier closes its fixture
     expect(await probePortFree()).toBe(true);
