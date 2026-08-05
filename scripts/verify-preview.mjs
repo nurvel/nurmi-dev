@@ -171,27 +171,33 @@ async function withTimeout(promise, ms, label = "timeout") {
  * immediately after spawn. Settles exactly once (on whichever fires first).
  * Preserves event diagnostics for all downstream consumers (readiness, cleanup, reaping).
  *
+ * Enriched with:
+ * - `event`: "error" | "exit" — which terminal event caused settlement
+ * - `settlementCount`: read-only count of successful settlements (always 0 or 1)
+ *
  * @param {import("node:child_process").ChildProcess} child
- * @returns {{ settled: Promise<{code?: number|null; signal?: string|null; error?: Error}>; settledState: 'pending'|'settled'; result: object|null }}
+ * @returns {{ settled: Promise<{code?: number|null; signal?: string|null; error?: Error; event: string}>; settledState: 'pending'|'settled'; result: object|null; settlementCount: number }}
  */
 export function createLifecycleObserver(child) {
   let settledState = "pending";
   let result = null;
+  let settlementCount = 0;
 
   const settled = new Promise((resolve) => {
     const trySettle = (info) => {
       if (settledState !== "pending") return; // already settled — ignore
       settledState = "settled";
+      settlementCount = 1;
       result = info;
       resolve(info);
     };
 
     child.once("error", (err) => {
-      trySettle({ error: err, code: null, signal: null });
+      trySettle({ error: err, code: null, signal: null, event: "error" });
     });
 
     child.once("exit", (code, signal) => {
-      trySettle({ code, signal, error: undefined });
+      trySettle({ code, signal, error: undefined, event: "exit" });
     });
   });
 
@@ -199,13 +205,17 @@ export function createLifecycleObserver(child) {
     settled,
     get settledState() { return settledState; },
     get result() { return result; },
+    get settlementCount() { return settlementCount; },
   };
   return observer;
 }
 
-/** Confirm the child is fully reaped and port released. */
+/** Confirm the child is fully reaped and port released. Returns structured evidence. */
 async function awaitChildReaped(child, lifecycle) {
-  if (!child) return true;
+  if (!child) return { pid: null, lifecycleEvent: null, settlementCount: 0, processSettled: false, portFree: true, fullyStopped: true };
+
+  const pid = child.pid;
+
   // Wait for the already-registered exit promise to settle (or timeout).
   try {
     await withTimeout(lifecycle.settled, 10_000, "awaitChildReaped timeout");
@@ -213,8 +223,24 @@ async function awaitChildReaped(child, lifecycle) {
     // Child may still be alive after grace.
   }
 
+  // Determine process settlement: observer settled with a terminal event AND Node child
+  // state shows the process is terminated (exitCode set OR signalCode set).
+  const terminalEvent = lifecycle.result?.event ?? null;
+  const processSettled = lifecycle.settlementCount === 1 &&
+    terminalEvent !== null &&
+    (child.exitCode !== undefined || child.signalCode !== null);
+
   // Confirm port is free (stronger proof than grepping process list).
-  return isPortFree(VITE_PREVIEW_PORT, VITE_PREVIEW_HOST);
+  const portFree = await isPortFree(VITE_PREVIEW_PORT, VITE_PREVIEW_HOST);
+
+  return {
+    pid,
+    lifecycleEvent: terminalEvent,
+    settlementCount: lifecycle.settlementCount,
+    processSettled,
+    portFree,
+    fullyStopped: processSettled && portFree,
+  };
 }
 
 /**
@@ -266,6 +292,10 @@ function checkInjectPostStartFail() {
 
 async function main() {
   let primaryError = null;
+  let child = null;
+  let lifecycle = null;
+  let reapingResult = null;
+  let cleanupError = null;
 
   /* --- Step 1: remove generated dist/ --- */
   info("Removing generated dist/");
@@ -282,7 +312,8 @@ async function main() {
   if (!existsSync(indexPath)) {
     console.error("[preview:check] FAIL: dist/index.html missing after build");
     process.exitCode = 1;
-    throw new Error("dist/index.html missing after build");
+    primaryError = new Error("dist/index.html missing after build");
+    throw primaryError;
   }
   const builtIndexBytes = readFileSync(indexPath);
   const builtIndexText = builtIndexBytes.toString("utf-8");
@@ -294,14 +325,15 @@ async function main() {
   if (!portFree) {
     console.error(`[preview:check] FAIL: Fixed port ${VITE_PREVIEW_PORT} is already occupied. Aborting.`);
     process.exitCode = 1;
-    throw new Error(`Fixed port ${VITE_PREVIEW_PORT} is already occupied`);
+    primaryError = new Error(`Fixed port ${VITE_PREVIEW_PORT} is already occupied`);
+    throw primaryError;
   }
 
   // Spawn Vite directly — no shell intermediary
   const viteCliPath = resolveViteCli();
   info(`Starting vite preview on ${VITE_PREVIEW_HOST}:${VITE_PREVIEW_PORT}`);
 
-  const child = spawn(process.execPath, [
+  child = spawn(process.execPath, [
     viteCliPath,
     "preview",
     "--host", VITE_PREVIEW_HOST,
@@ -325,7 +357,7 @@ async function main() {
 
   // Register unified lifecycle observer IMMEDIATELY — before any readiness polling or signals.
   // Observes both `error` and `exit`, settles exactly once, preserves diagnostics.
-  const lifecycle = createLifecycleObserver(child);
+  lifecycle = createLifecycleObserver(child);
 
   let childExited = false;
   let childExitInfo = null;
@@ -346,6 +378,7 @@ async function main() {
   };
 
   /* ---------- outer try/finally covers all post-spawn paths ---------- */
+  let parityConfirmed = false;
   try {
     signalHandlersInstalled = true;
     process.on("SIGINT", signalHandler);
@@ -357,7 +390,6 @@ async function main() {
       const tail = Buffer.concat(allOutput).toString().slice(0, 2048);
       console.error(`[preview:check] FAIL: vite preview process exited early (code=${childExitInfo?.code}, signal=${childExitInfo?.signal})`);
       if (tail) info("Server output: " + tail);
-      process.exitCode = 1;
       primaryError = new Error(`vite preview exited early (code=${childExitInfo?.code}, signal=${childExitInfo?.signal})`);
       throw primaryError;
     }
@@ -375,7 +407,6 @@ async function main() {
       const tail = Buffer.concat(allOutput).toString().slice(0, 2048);
       console.error(`[preview:check] FAIL: preview server did not start on ${VITE_PREVIEW_HOST}:${VITE_PREVIEW_PORT}`);
       if (tail) info("Server output: " + tail);
-      process.exitCode = 1;
       primaryError = new Error("preview server did not start");
       throw primaryError;
     }
@@ -436,20 +467,34 @@ async function main() {
     }
     info(`Asset ${assetMatch[1]} parity OK (${builtAsset.length} bytes)`);
 
-    info("All checks passed — preview parity confirmed.");
+    parityConfirmed = true;
   } finally {
     // Remove signal handlers so they don't leak
     try { process.off("SIGINT", signalHandler); } catch(_) {}
     try { process.off("SIGTERM", signalHandler); } catch(_) {}
 
-    // Always stop Vite and confirm port release
+    // Always stop Vite and prove port release before emitting final success
     if (child) {
-      let cleanupError = null;
+      let cleanupFixtureServer = null;
       try {
         await stopPreview(child, lifecycle);
-        // Await exit + confirm port clear — crucial for "truthful" stopped message.
-        const reaped = await awaitChildReaped(child, lifecycle);
-        if (reaped) {
+
+        // INJECT_CLEANUP_PORT_HOLD seam: after Vite has settled, the verifier binds its own
+        // loopback listener on the fixed port immediately before the ordinary clearance proof.
+        // This forces port-clearance verification to fail deterministically.
+        // The verifier-owned fixture is always closed in the nested finally below.
+        if (process.env.INJECT_CLEANUP_PORT_HOLD) {
+          cleanupFixtureServer = net.createServer();
+          await new Promise((resolve, reject) => {
+            cleanupFixtureServer.once("error", reject);
+            cleanupFixtureServer.listen(VITE_PREVIEW_PORT, VITE_PREVIEW_HOST, resolve);
+          });
+        }
+
+        reapingResult = await awaitChildReaped(child, lifecycle);
+
+        if (reapingResult.fullyStopped) {
+          // Only emit truthful stopped message when process AND port both proven.
           info("Preview server stopped.");
         } else {
           console.error("[preview:check] CLEANUP FAIL: child exited but port still held after graceful termination");
@@ -458,6 +503,13 @@ async function main() {
       } catch(cleanErr) {
         console.error("[preview:check] CLEANUP ERROR: " + cleanErr.message);
         cleanupError = cleanErr;
+      } finally {
+        // Always close the verifier-owned test fixture (itself, not an unrelated listener).
+        if (cleanupFixtureServer) {
+          await new Promise((resolve) => {
+            cleanupFixtureServer.close(() => resolve());
+          });
+        }
       }
 
       // Preserve primary error; surfacing cleanup failure does not mask it.
@@ -469,10 +521,20 @@ async function main() {
         // Only cleanup failure (no primary): still nonzero.
         process.exitCode = 1;
       }
+
+      // Emit opt-in machine-readable lifecycle evidence (test contract only).
+      if (process.env.REPORT_PREVIEW_LIFECYCLE === "1" && reapingResult && child.pid) {
+        console.log(`LIFECYCLE_REPORT: pid=${child.pid} event=${reapingResult.lifecycleEvent ?? "none"} settlementCount=${reapingResult.settlementCount} processSettled=${reapingResult.processSettled} portFree=${reapingResult.portFree} fullyStopped=${reapingResult.fullyStopped}`);
+      }
     }
 
     // Flush stdout so the final message reaches capture before Node exits.
     await new Promise((r) => setTimeout(r, 50));
+  }
+
+  // Emit overall success ONLY after cleanup is proven (fully stopped) and no errors exist.
+  if (!primaryError && !cleanupError) {
+    info("All checks passed — preview parity confirmed.");
   }
 
   // If primaryError was captured, ensure nonzero exit code.
