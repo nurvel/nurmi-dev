@@ -15,7 +15,7 @@ const Content = styled(PageContent)`
   margin: 0 auto;
   padding: 0 2rem;
   padding-top: min(30vh, 200px);
-  color: #1a1a1a;
+  color: ${(props) => props.theme.colors.aboutTextPrimary};
 
   @media (max-width: 768px) {
     padding: 0 1.5rem;
@@ -32,7 +32,11 @@ const TopBar = styled.div`
   left: 0;
   width: 100%;
   height: 12px;
-  background: linear-gradient(90deg, #7209b7, #be296a);
+  background: linear-gradient(
+    90deg,
+    ${(props) => props.theme.colors.violet},
+    ${(props) => props.theme.colors.darkPink}
+  );
 `;
 
 const ContactLinksContainer = styled.div`
@@ -53,7 +57,7 @@ const Divider = styled.div`
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgba(233, 30, 140, 0.2),
+    ${(props) => props.theme.colors.aboutAccentGlow},
     rgba(139, 92, 246, 0.2)
   );
 `;

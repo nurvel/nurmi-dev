@@ -9,15 +9,15 @@ type RecentWorkProps = {
 
 export function RecentWork({ title, items }: RecentWorkProps) {
   return (
-    <FocusSection>
-      <FocusTitle>{title}</FocusTitle>
+    <FocusSection aria-labelledby="about-recent-work-heading">
+      <FocusTitle id="about-recent-work-heading">{title}</FocusTitle>
       <RecentWorkGrid>
         {items.map((item, idx) => (
           <RecentWorkItemCard key={idx}>
             <Highlight>{item.highlight}</Highlight>
             {item.textA}
             {item.linkLabel && item.linkHref ? (
-              <a href={item.linkHref} target="_blank">
+              <a href={item.linkHref} target="_blank" rel="noopener noreferrer">
                 {item.linkLabel}{" "}
               </a>
             ) : null}
@@ -29,7 +29,7 @@ export function RecentWork({ title, items }: RecentWorkProps) {
   );
 }
 
-const FocusSection = styled.div`
+const FocusSection = styled.section`
   padding-top: 3rem;
 
   @media (max-width: 768px) {
@@ -41,7 +41,7 @@ const FocusTitle = styled.h2`
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #e91e8c;
+  color: ${props => props.theme.colors.aboutAccent};
   margin-bottom: 1rem;
   font-weight: 600;
 `;
@@ -66,15 +66,15 @@ const RecentWorkItemCard = styled(BodyText)`
   border-radius: 18px;
   border: 1px solid rgba(26, 26, 26, 0.08);
   background: #ffffff;
-  color: #1a1a1a;
+  color: ${props => props.theme.colors.aboutTextPrimary};
 `;
 
 const Highlight = styled.span`
-  color: #1a1a1a;
+  color: ${props => props.theme.colors.aboutTextPrimary};
   font-weight: 600;
   background: linear-gradient(
     180deg,
     transparent 60%,
-    rgba(233, 30, 140, 0.2) 60%
+    ${props => props.theme.colors.aboutAccentGlow} 60%
   );
 `;

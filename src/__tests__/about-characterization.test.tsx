@@ -195,16 +195,16 @@ describe("About page characterization", () => {
     });
 
     describe("target/rel behavior", () => {
-      it('sets target="_blank" and rel="noreferrer" on HTTP links', () => {
+      it('sets target="_blank" and rel="noopener noreferrer" on HTTP links', () => {
         const linkedinLink = screen.getByRole("link", { name: "LinkedIn" });
         expect(linkedinLink).toHaveAttribute("target", "_blank");
-        // In jsdom, rel attributes may render as "noreferrer" — check for presence
+        // rel="noopener noreferrer" for secure external link handling
         const relValue = linkedinLink.getAttribute("rel");
-        expect(relValue).toBe("noreferrer");
+        expect(relValue).toBe("noopener noreferrer");
 
         const githubLink = screen.getByRole("link", { name: "Github" });
         expect(githubLink).toHaveAttribute("target", "_blank");
-        expect(githubLink.getAttribute("rel")).toBe("noreferrer");
+        expect(githubLink.getAttribute("rel")).toBe("noopener noreferrer");
       });
 
       it('does NOT set target or rel on mailto links', () => {
