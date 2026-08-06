@@ -46,9 +46,15 @@ describe("font-delivery contract", () => {
     );
   });
 
-  it("styles.css @font-face points at the correct self-hosted URL with swap display", () => {
+  it("styles.css @font-face points at the correct self-hosted URL", () => {
     const content = read(stylesCssPath);
-    expect(content).toMatch(new RegExp('url\\s*\\(\\s*["\']?' + fontUrl.replace("/", "\\/") + '["\']*\\)', "i"));
+    expect(content).toContain(`url("${fontUrl}")`);
+  });
+
+  it("styles.css @font-face uses the deliberate anti-swap optional display", () => {
+    const content = read(stylesCssPath);
+    expect(content).toMatch(/font-display:\s*optional/);
+    expect(content).not.toMatch(/font-display:\s*swap/);
   });
 
   it("styles.css @font-face covers the full variable weight range 300-700", () => {
@@ -59,11 +65,6 @@ describe("font-delivery contract", () => {
   it("styles.css @font-face declares normal/upright style (no italic)", () => {
     const content = read(stylesCssPath);
     expect(content).toMatch(/font-style:\s*normal/);
-  });
-
-  it("styles.css @font-face uses font-display: swap", () => {
-    const content = read(stylesCssPath);
-    expect(content).toMatch(/font-display:\s*swap/);
   });
 
   it(`all repository weights ${requiredWeights.join(", ")} fall inside the variable range`, () => {
