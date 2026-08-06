@@ -22,6 +22,7 @@
     "prepreview": "npm run build",
     "preview": "vite preview",
     "preview:check": "node scripts/verify-preview.mjs",
+    "font:check": "node scripts/verify-font-delivery.mjs",
     "test": "vitest run",
     "build:check": "tsc --noEmit && vite build --outDir .build-check"
   },

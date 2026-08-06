@@ -31,6 +31,18 @@ It rebuilds from scratch, starts the preview server on a fixed loopback port, fe
 served HTML and its JS module asset through localhost, and verifies that every byte matches
 the just-built `dist/` files. It cleans up after itself and exits 0 on success.
 
+The first-party font delivery contract can be checked with:
+
+```
+npm run font:check
+```
+
+This performs a fresh production build and independent cold loads in desktop (1440x900)
+and mobile (390x844) Chrome profiles. It permits loopback requests only, requires the
+Roboto Condensed WOFF2 to return HTTP 200 without Google Fonts requests, checks all required
+weights and computed families, and records zero layout shift plus stable post-font bounding
+boxes. Machine-readable evidence is written to ignored `target/font-delivery-evidence.json`.
+
 ### Artifact ownership
 
 `dist/` is a **generated artifact**. It lives in `.gitignore` and is regenerated on demand
