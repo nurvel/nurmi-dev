@@ -19,7 +19,9 @@
     "start": "vite",
     "dev": "vite",
     "build": "tsc && vite build",
+    "prepreview": "npm run build",
     "preview": "vite preview",
+    "preview:check": "node scripts/verify-preview.mjs",
     "test": "vitest run",
     "build:check": "tsc --noEmit && vite build --outDir .build-check"
   },
