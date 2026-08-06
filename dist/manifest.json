@@ -1,8 +1,0 @@
-{
-  "short_name": "nurmi.dev",
-  "name": "Veli-Pekka Nurmi website",
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
-}

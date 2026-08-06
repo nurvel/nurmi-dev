@@ -8,7 +8,8 @@
 # testing
 /coverage
 
-# production
+# build output (generated artifact, not source-controlled)
+/dist
 /build
 
 # build check output (local only)
