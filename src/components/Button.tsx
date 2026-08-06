@@ -10,7 +10,7 @@ export const Button = styled.button`
   width: fit-content;
 
   font-weight: bold;
-  font-family: "Roboto", sans-serif;
+  font-family: "Roboto Condensed", sans-serif;
 
   // Center content
   display: flex;

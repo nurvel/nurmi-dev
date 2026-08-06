@@ -1,8 +1,6 @@
 import { createGlobalStyle } from "styled-components";
 
 const GlobalStyle = createGlobalStyle`
-  @import url("https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap");
-
   *, *::before, *::after {
     box-sizing: border-box;
   }
@@ -11,6 +9,7 @@ const GlobalStyle = createGlobalStyle`
     max-width: 100%;
     width: 100%;
     overflow-x: hidden;
+    font-synthesis: none;
   }
 
   html {
