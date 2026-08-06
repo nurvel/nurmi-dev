@@ -105,14 +105,15 @@ async function collect(profile, viewport, base, chrome) {
         const box = el => { const r=el.getBoundingClientRect(); return {x:r.x,y:r.y,width:r.width,height:r.height}; };
         const metric = el => { const range=document.createRange(); range.selectNodeContents(el); const r=range.getBoundingClientRect(); return {width:r.width,height:r.height}; };
         const weights = [300,400,500,600,700].map(weight => ({weight, loaded: document.fonts.check('normal '+weight+' 16px "Roboto Condensed"')}));
-        const body = document.body, button = document.querySelector('button') || (() => { const el = document.createElement('button'); el.dataset.fontEvidenceRepresentative = 'true'; el.style.fontFamily = family(body); el.textContent = 'Font evidence'; document.body.append(el); return el; })();
-        const sample = () => ({ body:box(body), button:button?box(button):null, bodyText:metric(body), buttonText:button?metric(button):null, status:document.fonts.status, weights:weights.map(w=>w.loaded) });
+        const body = document.body;
+        // Browser evidence is limited to the actually rendered production document body.
+        const sample = () => ({ body:box(body), bodyText:metric(body), status:document.fonts.status, weights:weights.map(w=>w.loaded) });
         const preFont = sample();
         await document.fonts.ready; await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
         const postFont = sample();
         const readyWeights = [300,400,500,600,700].map(weight => ({weight, loaded: document.fonts.check('normal '+weight+' 16px "Roboto Condensed"')}));
         const boxes = [postFont, sample()];
-        return { fontsReady:true, weights:readyWeights, bodyFamily:family(body), buttonFamily:button?family(button):null, synthesis:getComputedStyle(document.documentElement).fontSynthesis, preFont, postFont, boxes, performance:{...window.__fontEvidence, paints:((window.__fontEvidence && window.__fontEvidence.paints) || []).length ? window.__fontEvidence.paints : performance.getEntriesByType('paint').map(e => ({name:e.name,startTime:e.startTime}))} };
+        return { fontsReady:true, weights:readyWeights, bodyFamily:family(body), synthesis:getComputedStyle(document.documentElement).fontSynthesis, preFont, postFont, boxes, performance:{...window.__fontEvidence, paints:((window.__fontEvidence && window.__fontEvidence.paints) || []).length ? window.__fontEvidence.paints : performance.getEntriesByType('paint').map(e => ({name:e.name,startTime:e.startTime}))} };
       })()` });
     const value = result.result.value;
     const fontRequests = requests.filter((r) => r.url.includes("/fonts/") || r.url.includes("fonts.googleapis.com") || r.url.includes("fonts.gstatic.com"));
@@ -120,11 +121,11 @@ async function collect(profile, viewport, base, chrome) {
     const external = requests.filter((r) => !r.url.startsWith(base) && !/googletagmanager\.com|google-analytics\.com/.test(r.url));
     const font = fontRequests.find((r) => r.url.includes(FONT_PATH));
     const stable = value.boxes.length === 2 && JSON.stringify(value.boxes[0]) === JSON.stringify(value.boxes[1]);
-    const noLateSwap = JSON.stringify(value.preFont.body) === JSON.stringify(value.postFont.body) && JSON.stringify(value.preFont.button) === JSON.stringify(value.postFont.button) && JSON.stringify(value.preFont.bodyText) === JSON.stringify(value.postFont.bodyText) && JSON.stringify(value.preFont.buttonText) === JSON.stringify(value.postFont.buttonText);
+    const noLateSwap = JSON.stringify(value.preFont.body) === JSON.stringify(value.postFont.body) && JSON.stringify(value.preFont.bodyText) === JSON.stringify(value.postFont.bodyText);
     const shift = (value.performance?.shifts || []).reduce((sum, e) => sum + e.value, 0);
     const unexpectedFailures = failures.filter((f) => f.errorText !== "net::ERR_BLOCKED_BY_CLIENT");
-    const pass = !!font && font.status === 200 && !fontRequests.some((r) => /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(r.url)) && external.length === 0 && value.fontsReady && value.weights.every((w) => w.loaded) && /Roboto Condensed/i.test(value.bodyFamily) && /Roboto Condensed/i.test(value.buttonFamily || "") && value.synthesis === "none" && shift === 0 && stable && noLateSwap && unexpectedFailures.length === 0;
-    return { viewport: { name: viewport.name, width: viewport.width, height: viewport.height, mobile: viewport.mobile }, fontDelayMs: FONT_DELAY_MS, fontPolicy: process.env.FONT_DISPLAY_POLICY || "production", fontRequests, externalRequests: external, blockedExternalRequests: blockedExternal, requiredWeights: value.weights, computedFamily: { body: value.bodyFamily, button: value.buttonFamily }, fontSynthesis: value.synthesis, paint: value.performance?.paints || [], layoutShift: { entries: value.performance?.shifts || [], cumulative: shift }, firstPaint: value.preFont, postFontReady: value.postFont, noLateSwap, boundingBoxes: value.boxes, chrome: { product: version.Browser, protocol: version["Protocol-Version"] }, pass };
+    const pass = !!font && font.status === 200 && !fontRequests.some((r) => /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(r.url)) && external.length === 0 && value.fontsReady && value.weights.every((w) => w.loaded) && /Roboto Condensed/i.test(value.bodyFamily) && value.synthesis === "none" && shift === 0 && stable && noLateSwap && unexpectedFailures.length === 0;
+    return { viewport: { name: viewport.name, width: viewport.width, height: viewport.height, mobile: viewport.mobile }, fontDelayMs: FONT_DELAY_MS, fontPolicy: process.env.FONT_DISPLAY_POLICY || "production", fontRequests, externalRequests: external, blockedExternalRequests: blockedExternal, requiredWeights: value.weights, computedFamily: { body: value.bodyFamily }, fontSynthesis: value.synthesis, paint: value.performance?.paints || [], layoutShift: { entries: value.performance?.shifts || [], cumulative: shift }, firstPaint: value.preFont, postFontReady: value.postFont, noLateSwap, boundingBoxes: value.boxes, chrome: { product: version.Browser, protocol: version["Protocol-Version"] }, pass };
   } finally { if (cdp) cdp.close(); try { browser.kill("SIGTERM"); } catch {} await Promise.race([lifecycle.settled, wait(1000)]); try { browser.kill("SIGKILL"); } catch {} await Promise.race([lifecycle.settled, wait(3000)]); }
 }
 

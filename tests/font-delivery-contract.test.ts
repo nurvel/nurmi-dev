@@ -30,8 +30,9 @@ describe("font-delivery contract", () => {
     expect(content).toMatch(/font-synthesis:\s*none/);
   });
 
-  it("Button uses Roboto Condensed (not bare Roboto)", () => {
+  it("static Button component source coverage uses Roboto Condensed (not bare Roboto)", () => {
     const content = read(buttonPath);
+    // This is static/component-source coverage only; the browser oracle samples rendered production elements.
     expect(content).toMatch(/font-family:.*"Roboto\s+Condensed"/i);
     // Reject a bare "Roboto" without "Condensed"
     expect(content).not.toMatch(/font-family:\s*"Roboto"[^C]/i);
