@@ -10,8 +10,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-gtm-module": "^2.0.11",
-    "styled-components": "^6.1.12",
-    "typescript": "^5.5.4"
+    "styled-components": "^6.5.1",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "predeploy": "npm run build",
@@ -41,16 +41,15 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@testing-library/jest-dom": "^6.4.8",
+    "@testing-library/jest-dom": "~6.9.1",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.12",
     "@types/react-gtm-module": "^2.0.3",
     "@vitejs/plugin-react-swc": "^3.7.0",
-    "gh-pages": "^6.1.1",
+    "gh-pages": "^6.3.0",
     "jsdom": "^30.0.1",
-    "vite": "^7.2.2",
+    "vite": "^7.3.6",
     "vitest": "^4.1.10"
   }
 }
