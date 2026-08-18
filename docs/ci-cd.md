@@ -12,7 +12,7 @@ GitHub Actions owns validation and deployment. Cloudflare Workers Static Assets 
   - preview: `wrangler versions upload --preview-alias <branch-slug>`
   - production: `wrangler deploy`
 
-Cloudflare Git integration is not used. The current GitHub Pages deployment remains the fallback until the Worker production version and custom domain are verified.
+Cloudflare Git integration is not used. The Worker custom domain is the production endpoint; the historical GitHub Pages deployment is retained only as migration history until its repository setting and branch are removed.
 
 ## Branch workflow
 
@@ -80,10 +80,6 @@ Repository-level Actions secrets:
 - `CLOUDFLARE_API_TOKEN` — Account → Workers Scripts → Edit/Write, scoped to the account containing `nurmi-dev`.
 - `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID.
 
-Repository-level Actions variable:
-
-- `CLOUDFLARE_PAGES_PROJECT=nurmi-dev` — retained as the existing project identifier; `wrangler.jsonc` is authoritative for the Worker name.
-
 These are repository secrets, not Environment secrets. Do not expose them to pull request validation or commit them to the repository.
 
 SonarCloud is optional and remains skipped until both repository variables below are configured:
@@ -93,6 +89,6 @@ SonarCloud is optional and remains skipped until both repository variables below
 
 ## Cutover and rollback
 
-Do not change `nurmi.dev` until the Worker production deployment is verified through its `workers.dev` URL. Then add `nurmi.dev` as a Worker custom domain and verify DNS, TLS, assets, fonts, manifest, and application behavior.
+`nurmi.dev` is now attached to the `nurmi-dev` Worker as its production custom domain. The cutover was verified against the `workers.dev` artifact by checking DNS, TLS, HTML parity, assets, fonts, manifest, and application routes.
 
-Keep the GitHub Pages deployment available until the custom-domain check passes. For rollback, promote a known-good Worker version from Cloudflare's Deployments view and restore the previous DNS/custom-domain routing only if necessary. Do not rewrite release tags.
+For rollback, promote a known-good Worker version from Cloudflare's Deployments view and restore the previous DNS/custom-domain routing only if necessary. Do not rewrite release tags.
