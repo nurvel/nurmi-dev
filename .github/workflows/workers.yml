@@ -36,7 +36,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run tests
         run: npm test
@@ -72,7 +72,7 @@ jobs:
           cache: npm
 
       - name: Install deployment tooling
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Download validated build artifact
         uses: actions/download-artifact@v4
@@ -92,7 +92,7 @@ jobs:
           fi
 
           echo "Preview alias: $preview_alias"
-          npm exec wrangler -- versions upload --preview-alias "$preview_alias" 2>&1 | tee /tmp/wrangler-preview.log
+          ./node_modules/.bin/wrangler versions upload --preview-alias "$preview_alias" 2>&1 | tee /tmp/wrangler-preview.log
 
           preview_url="https://${preview_alias}-nurmi-dev.nurmi-vp.workers.dev/"
           preview_code=""
@@ -141,7 +141,7 @@ jobs:
           cache: npm
 
       - name: Install deployment tooling
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Download validated build artifact
         uses: actions/download-artifact@v4
@@ -150,7 +150,7 @@ jobs:
           path: dist
 
       - name: Deploy Worker production version
-        run: npm exec wrangler -- deploy 2>&1 | tee /tmp/wrangler-production.log
+        run: ./node_modules/.bin/wrangler deploy 2>&1 | tee /tmp/wrangler-production.log
 
       - name: Publish deployment summary
         run: |
