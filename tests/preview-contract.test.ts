@@ -21,11 +21,20 @@ describe("preview-parity contract", () => {
     expect(pkg.scripts.prepreview).toBe("npm run build");
   });
 
-  it("package.json retains preview, predeploy, and deploy scripts", () => {
+  it("package.json retains preview and removes the legacy GitHub Pages deploy scripts", () => {
     const pkg = JSON.parse(read("package.json"));
     expect(pkg.scripts.preview).toBe("vite preview");
-    expect(pkg.scripts.predeploy).toBe("npm run build");
-    expect(pkg.scripts.deploy).toBe("gh-pages -d dist");
+    expect(pkg.scripts.predeploy).toBeUndefined();
+    expect(pkg.scripts.deploy).toBeUndefined();
+    expect(pkg.devDependencies["gh-pages"]).toBeUndefined();
+    expect(pkg.devDependencies.wrangler).toBeDefined();
+  });
+
+  it("configures the Worker Static Assets deployment", () => {
+    const config = read("wrangler.jsonc");
+    expect(config).toContain('"name": "nurmi-dev"');
+    expect(config).toContain('"directory": "./dist"');
+    expect(config).toContain('"not_found_handling": "single-page-application"');
   });
 
   it("package.json defines preview:check script pointing to verifier", () => {

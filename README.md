@@ -1,6 +1,6 @@
 # nurmi.dev
 
-My [personal website](https://nurvel.github.io) hosted on GitHub Pages, built with React + Vite.
+My [personal website](https://nurmi.dev), built with React + Vite and deployed through GitHub Actions to Cloudflare Workers Static Assets.
 
 ## Get started 
 
@@ -43,8 +43,19 @@ Roboto Condensed WOFF2 to return HTTP 200 without Google Fonts requests, checks 
 weights and computed families, and records zero layout shift plus stable post-font bounding
 boxes. Machine-readable evidence is written to ignored `target/font-delivery-evidence.json`.
 
+### CI/CD
+
+The deployment workflow is documented in [`docs/ci-cd.md`](docs/ci-cd.md). In short:
+
+```text
+feature/fix/chore branch → CI → Worker preview version
+merge to main → CI → Worker production deployment
+optional vX.Y.Z tag → GitHub Release
+```
+
 ### Artifact ownership
 
 `dist/` is a **generated artifact**. It lives in `.gitignore` and is regenerated on demand
-by `npm run build`. It is never committed to the repository. To deploy, use `npm run deploy`
-(which runs `predeploy: npm run build` before publishing via `gh-pages`).
+by `npm run build`. It is never committed to the repository. GitHub Actions uploads the
+validated artifact to Cloudflare Workers Static Assets; there is no local GitHub Pages deploy
+script.
