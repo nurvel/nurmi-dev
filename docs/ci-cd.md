@@ -16,19 +16,17 @@ Cloudflare Git integration is not used. The Worker custom domain is the producti
 
 ## Branch workflow
 
-Canonical branches:
+Branch policy:
 
 - `main` — production
-- `feature/<name>` — feature preview
-- `fix/<name>` — fix preview
-- `chore/<name>` — maintenance preview
+- every other repository branch — preview
 
 For a change:
 
 ```bash
 git switch main
 git pull --ff-only origin main
-git switch -c feature/short-description
+git switch -c short-description
 # edit and verify locally
 npm ci
 npm test
@@ -36,29 +34,43 @@ npm run build
 git push -u origin HEAD
 ```
 
-A pull request to `main` runs validation only. A push to a repository branch runs validation and then uploads a Worker preview version. Preview aliases are normalized DNS-safe branch slugs, for example:
+A pull request to `main` runs validation only. A push to any repository branch runs validation and then uploads a Worker preview version, except that `main` continues to production. Preview aliases are normalized DNS-safe branch slugs, for example:
 
 ```text
-feature/ci-cd-canary
-→ feature-ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
+ci-cd-canary
+→ ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
 Preview deployment does not promote production.
 
 After review, merge the pull request to `main`. The push to `main` runs validation again and then promotes the validated artifact with `wrangler deploy`.
 
-## Release tags
+## Release identity and tags
 
-Tags are optional and identify production versions. Use stable SemVer tags only, and tag a commit already merged into `main`:
+`src/releaseIdentity.ts` is the single UI source for build identity. Vite injects
+`VITE_RELEASE_VERSION` at build time. A stable `vMAJOR.MINOR.PATCH` value is
+shown as the production version; every other value (including local builds) is
+shown with an explicit `Preview build` marker. No version is hand-maintained in
+the application.
 
-```bash
-git switch main
-git pull --ff-only origin main
-git tag -a v1.0.0 -m "v1.0.0"
-git push origin v1.0.0
-```
+The `workers.yml` main pipeline owns the complete production release contract:
 
-The tag workflow verifies the tag format and ancestry, then creates a GitHub Release with generated notes. A tag does not deploy Cloudflare and is not required for normal production deployment.
+1. `validate` fetches existing stable tags, runs tests, and computes the next
+   patch tag (or reuses a stable tag already pointing at the current commit).
+2. The validated artifact is built with that exact tag and deployed to
+   Cloudflare production.
+3. Only after a successful deployment does `release-production` create and push
+   the tag, then create the matching GitHub Release with generated notes.
+
+Main pushes and manual dispatches share `worker-cicd-main` serialization with
+`cancel-in-progress: false`. The release step checks whether the candidate tag
+already exists, rejects a tag pointing at a different commit, and skips an
+existing GitHub Release. A retry after deployment therefore reuses the same
+tag/release instead of allocating another patch or creating a duplicate. The
+old tag-triggered `release.yml` was removed so there is only one release owner.
+
+Non-main branch and pull-request builds never receive a stable release tag. They use a
+`preview-<commit>` identity and preview deployments remain non-production.
 
 ## GitHub configuration
 
@@ -91,4 +103,7 @@ SonarCloud is optional and remains skipped until both repository variables below
 
 `nurmi.dev` is now attached to the `nurmi-dev` Worker as its production custom domain. The cutover was verified against the `workers.dev` artifact by checking DNS, TLS, HTML parity, assets, fonts, manifest, and application routes.
 
-For rollback, promote a known-good Worker version from Cloudflare's Deployments view and restore the previous DNS/custom-domain routing only if necessary. Do not rewrite release tags.
+For rollback, promote a known-good prior Worker version from Cloudflare's
+Deployments view. If the application release also needs to be referenced,
+select the corresponding prior GitHub Release/tag; do not rewrite or reuse
+release tags. The production custom domain remains `nurmi.dev`.
