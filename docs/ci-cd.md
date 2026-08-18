@@ -62,6 +62,19 @@ The tag workflow verifies the tag format and ancestry, then creates a GitHub Rel
 
 ## GitHub configuration
 
+The production job targets the GitHub `production` environment and publishes the
+current Worker URL to the repository's Deployments view:
+
+- Environment: `production`
+- Current URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
+- Final URL after cutover: `https://nurmi.dev/`
+
+Preview deployments are intentionally not registered as GitHub deployment
+environments. Their branch-specific URLs are published in the Actions run
+summary, while Cloudflare retains the deployed version history. This keeps the
+repository's deployment list focused on production instead of accumulating
+short-lived preview records.
+
 Repository-level Actions secrets:
 
 - `CLOUDFLARE_API_TOKEN` — Account → Workers Scripts → Edit/Write, scoped to the account containing `nurmi-dev`.
