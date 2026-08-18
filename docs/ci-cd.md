@@ -5,14 +5,14 @@
 GitHub Actions owns validation and deployment. Cloudflare Workers Static Assets serves the built Vite output.
 
 - Worker: `nurmi-dev`
-- Current non-production URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
-- Production domain: `https://nurmi.dev/` after the controlled cutover
+- Worker fallback/debug URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
+- Production domain: `https://nurmi.dev/`
 - Build output: `dist/`
 - Cloudflare commands:
   - preview: `wrangler versions upload --preview-alias <branch-slug>`
   - production: `wrangler deploy`
 
-Cloudflare Git integration is not used. The Worker custom domain is the production endpoint; the historical GitHub Pages deployment is retained only as migration history until its repository setting and branch are removed.
+Cloudflare Git integration is not used. The Worker custom domain is the production endpoint. GitHub Pages is disabled, and the legacy `gh-pages` branch has been removed.
 
 ## Branch workflow
 
@@ -66,8 +66,8 @@ The production job targets the GitHub `production` environment and publishes the
 current Worker URL to the repository's Deployments view:
 
 - Environment: `production`
-- Current URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
-- Final URL after cutover: `https://nurmi.dev/`
+- Production URL: `https://nurmi.dev/`
+- Worker fallback/debug URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
 
 Preview deployments are intentionally not registered as GitHub deployment
 environments. Their branch-specific URLs are published in the Actions run
