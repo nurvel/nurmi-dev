@@ -73,6 +73,11 @@ Repository-level Actions variable:
 
 These are repository secrets, not Environment secrets. Do not expose them to pull request validation or commit them to the repository.
 
+SonarCloud is optional and remains skipped until both repository variables below are configured:
+
+- `SONAR_PROJECT_KEY`
+- `SONAR_ORGANIZATION`
+
 ## Cutover and rollback
 
 Do not change `nurmi.dev` until the Worker production deployment is verified through its `workers.dev` URL. Then add `nurmi.dev` as a Worker custom domain and verify DNS, TLS, assets, fonts, manifest, and application behavior.

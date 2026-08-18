@@ -94,10 +94,27 @@ jobs:
           echo "Preview alias: $preview_alias"
           npm exec wrangler -- versions upload --preview-alias "$preview_alias" 2>&1 | tee /tmp/wrangler-preview.log
 
+          preview_url="https://${preview_alias}-nurmi-dev.nurmi-vp.workers.dev/"
+          preview_code=""
+          for attempt in {1..10}; do
+            preview_code="$(curl -sS -o /tmp/nurmi-preview.html -w '%{http_code}' "$preview_url" || true)"
+            if [[ "$preview_code" == 2* ]]; then
+              break
+            fi
+            sleep 3
+          done
+          if [[ "$preview_code" != 2* ]]; then
+            echo "Preview URL did not return a successful response: $preview_url (HTTP $preview_code)"
+            exit 1
+          fi
+          echo "Preview URL: $preview_url (HTTP $preview_code)"
+
           {
             echo "### Cloudflare Worker preview"
             echo "- Branch: $GITHUB_REF_NAME"
             echo "- Alias: $preview_alias"
+            echo "- URL: $preview_url"
+            echo "- HTTP status: $preview_code"
             echo "- Commit: $GITHUB_SHA"
             echo
             echo '```text'
