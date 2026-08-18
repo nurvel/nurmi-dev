@@ -3,6 +3,8 @@ import styled from "styled-components";
 import GlobalStyle from "../common/globalStyles";
 import { useScrollSnap } from "../hooks/useScrollSnap";
 import { SectionScrollProvider } from "../context/SectionScrollContext";
+import Footer from "./Footer";
+import { buildIdentity } from "../releaseIdentity";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -30,6 +32,7 @@ export default function Layout({ children }: LayoutProps) {
       <AppContainer>
         <GlobalStyle />
         <SectionStack>{children}</SectionStack>
+        <Footer identity={buildIdentity} />
       </AppContainer>
     </SectionScrollProvider>
   );
