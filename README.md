@@ -48,9 +48,9 @@ boxes. Machine-readable evidence is written to ignored `target/font-delivery-evi
 The deployment workflow is documented in [`docs/ci-cd.md`](docs/ci-cd.md). In short:
 
 ```text
-feature/fix/chore branch → CI → Worker preview version
+any non-main branch → CI → Worker preview version
 merge to main → CI → Worker production deployment
-optional vX.Y.Z tag → GitHub Release
+successful main deployment → next vX.Y.Z tag → GitHub Release
 ```
 
 ### Artifact ownership

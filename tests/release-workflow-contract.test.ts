@@ -8,6 +8,14 @@ const read = (name: string) => fs.readFileSync(path.join(ROOT, name), "utf8");
 describe("production release workflow contract", () => {
   const workflow = read(".github/workflows/workers.yml");
 
+  it("runs on every branch push while keeping pull requests validate-only", () => {
+    expect(workflow).toContain("  push:\n    branches:\n      - '**'");
+    expect(workflow).toContain(
+      "if: github.event_name == 'push' && github.ref != 'refs/heads/main'",
+    );
+    expect(workflow).toContain("pull_request:\n    branches: [main]");
+  });
+
   it("serializes main runs without cancellation", () => {
     expect(workflow).toContain("group: worker-cicd-${{ github.ref }}");
     expect(workflow).toContain("cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}");

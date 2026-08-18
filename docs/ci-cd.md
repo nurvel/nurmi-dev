@@ -16,19 +16,17 @@ Cloudflare Git integration is not used. The Worker custom domain is the producti
 
 ## Branch workflow
 
-Canonical branches:
+Branch policy:
 
 - `main` — production
-- `feature/<name>` — feature preview
-- `fix/<name>` — fix preview
-- `chore/<name>` — maintenance preview
+- every other repository branch — preview
 
 For a change:
 
 ```bash
 git switch main
 git pull --ff-only origin main
-git switch -c feature/short-description
+git switch -c short-description
 # edit and verify locally
 npm ci
 npm test
@@ -36,11 +34,11 @@ npm run build
 git push -u origin HEAD
 ```
 
-A pull request to `main` runs validation only. A push to a repository branch runs validation and then uploads a Worker preview version. Preview aliases are normalized DNS-safe branch slugs, for example:
+A pull request to `main` runs validation only. A push to any repository branch runs validation and then uploads a Worker preview version, except that `main` continues to production. Preview aliases are normalized DNS-safe branch slugs, for example:
 
 ```text
-feature/ci-cd-canary
-→ feature-ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
+ci-cd-canary
+→ ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
 Preview deployment does not promote production.
@@ -71,7 +69,7 @@ existing GitHub Release. A retry after deployment therefore reuses the same
 tag/release instead of allocating another patch or creating a duplicate. The
 old tag-triggered `release.yml` was removed so there is only one release owner.
 
-Branch and pull-request builds never receive a stable release tag. They use a
+Non-main branch and pull-request builds never receive a stable release tag. They use a
 `preview-<commit>` identity and preview deployments remain non-production.
 
 ## GitHub configuration
