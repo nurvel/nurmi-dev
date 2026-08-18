@@ -1,7 +1,6 @@
 {
   "name": "nurmi.dev",
   "version": "0.1.0",
-  "homepage": "https://nurvel.github.io/",
   "private": true,
   "dependencies": {
     "@types/node": "^22.1.0",
@@ -14,8 +13,6 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
     "start": "vite",
     "dev": "vite",
     "build": "tsc && vite build",
@@ -48,9 +45,9 @@
     "@types/jest": "^29.5.12",
     "@types/react-gtm-module": "^2.0.3",
     "@vitejs/plugin-react-swc": "^3.7.0",
-    "gh-pages": "^6.3.0",
     "jsdom": "^30.0.1",
     "vite": "^7.3.6",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.123.0"
   }
 }
