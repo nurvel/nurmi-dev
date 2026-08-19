@@ -68,6 +68,14 @@ describe("font-delivery contract", () => {
     expect(content).toMatch(/font-style:\s*normal/);
   });
 
+  it("font evidence parses external font hosts instead of using URL substrings", () => {
+    const content = read("scripts/verify-font-delivery.mjs");
+    expect(content).toContain("new URL(value).hostname.toLowerCase()");
+    expect(content).toContain("GOOGLE_FONT_HOSTS");
+    expect(content).not.toContain('r.url.includes("fonts.googleapis.com")');
+    expect(content).not.toContain('r.url.includes("fonts.gstatic.com")');
+  });
+
   it(`all repository weights ${requiredWeights.join(", ")} fall inside the variable range`, () => {
     const content = read(stylesCssPath);
     const m = content.match(/font-weight:\s*(\d+)\s+(\d+)/);
