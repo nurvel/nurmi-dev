@@ -1,5 +1,5 @@
 export const RELEASES_URL =
-  "https://github.com/nurvel/nurvel.github.io/releases";
+  "https://github.com/nurvel/nurmi-dev/releases";
 
 const STABLE_TAG_PATTERN = /^v\d+\.\d+\.\d+$/;
 
