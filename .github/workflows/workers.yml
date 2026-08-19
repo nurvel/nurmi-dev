@@ -3,6 +3,7 @@ name: Worker CI/CD
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
   push:
     branches:
       - '**'
@@ -21,6 +22,7 @@ env:
 jobs:
   validate:
     name: validate
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
       build_identity: ${{ steps.identity.outputs.build_identity }}
@@ -102,7 +104,7 @@ jobs:
       contents: read
       deployments: write
     environment:
-      name: preview-${{ github.ref_name }}
+      name: preview
       url: ${{ steps.preview.outputs.preview_url }}
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -169,6 +171,75 @@ jobs:
             cat /tmp/wrangler-preview.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup-preview:
+    name: cleanup-preview
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+      pull-requests: read
+    steps:
+      - name: Remove closed pull request preview deployments
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            const headOwner = context.payload.pull_request.head.repo?.owner.login;
+            const environment = "preview";
+
+            if (!headOwner) {
+              core.info(`No head repository owner found for ${branch}; nothing to clean.`);
+              return;
+            }
+
+            const openPullRequests = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: "open",
+                head: `${headOwner}:${branch}`,
+                per_page: 100,
+              },
+            );
+            if (openPullRequests.length > 0) {
+              core.info(`Keeping ${environment}; another open PR still uses ${branch}.`);
+              return;
+            }
+
+            const deployments = await github.paginate(
+              github.rest.repos.listDeployments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                environment,
+                ref: branch,
+                per_page: 100,
+              },
+            );
+
+            for (const deployment of deployments) {
+              if (deployment.active) {
+                await github.rest.repos.createDeploymentStatus({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: deployment.id,
+                  state: "inactive",
+                  environment,
+                  description: "Preview removed after pull request closure.",
+                });
+              }
+              await github.rest.repos.deleteDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+              });
+            }
+            core.info(`Removed ${deployments.length} deployment(s) for ${environment}.`);
 
   deploy-production:
     name: deploy-production

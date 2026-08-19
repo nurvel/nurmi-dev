@@ -41,7 +41,7 @@ ci-cd-canary
 → ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
-The workflow publishes the preview URL as a GitHub Deployment Environment URL. For a branch with an open pull request to `main`, GitHub exposes it in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run.
+The workflow publishes each preview URL through the shared GitHub Deployment Environment `preview`. For a branch with an open pull request to `main`, GitHub exposes the branch's deployment in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run. When the pull request closes, a cleanup job marks that branch's preview deployments inactive and removes them from the deployment history. If another open pull request uses the same branch, cleanup is skipped.
 
 Preview deployment does not promote production.
 
