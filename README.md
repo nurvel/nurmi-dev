@@ -54,6 +54,12 @@ merge to main → CI → Worker production deployment
 successful main deployment → next vX.Y.Z tag → GitHub Release
 ```
 
+### Hosting
+
+Production is served only through Cloudflare Workers at [nurmi.dev](https://nurmi.dev).
+GitHub Pages is intentionally disabled for this repository; do not enable a Pages
+publishing source in repository settings.
+
 ### Artifact ownership
 
 `dist/` is a **generated artifact**. It lives in `.gitignore` and is regenerated on demand
