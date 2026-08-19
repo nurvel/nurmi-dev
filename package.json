@@ -44,7 +44,7 @@
     "@testing-library/user-event": "^14.6.4",
     "@types/jest": "^29.5.12",
     "@types/react-gtm-module": "^2.0.3",
-    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@vitejs/plugin-react-swc": "^4.3.3",
     "jsdom": "^30.0.1",
     "vite": "^8.2.1",
     "vitest": "^4.1.10",
