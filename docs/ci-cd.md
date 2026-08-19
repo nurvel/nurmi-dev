@@ -41,6 +41,8 @@ ci-cd-canary
 → ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
+For a branch with an open pull request to `main`, the workflow adds or updates one sticky PR comment with a clickable **Open preview** link. The same link is also available in the workflow run summary. A branch push without an associated PR gets the summary link only.
+
 Preview deployment does not promote production.
 
 After review, merge the pull request to `main`. The push to `main` runs validation again and then promotes the validated artifact with `wrangler deploy`.

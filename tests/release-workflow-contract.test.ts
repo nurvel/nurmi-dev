@@ -30,6 +30,17 @@ describe("production release workflow contract", () => {
     );
   });
 
+  it("publishes one updated clickable preview comment for the associated PR", () => {
+    expect(workflow).toContain("issues: write");
+    expect(workflow).toContain("pull-requests: read");
+    expect(workflow).toContain("id: preview");
+    expect(workflow).toContain('echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain("actions/github-script@v9");
+    expect(workflow).toContain("<!-- nurmi-dev-preview -->");
+    expect(workflow).toContain("issues.updateComment");
+    expect(workflow).toContain("issues.createComment");
+  });
+
   it("creates the tag only after successful deployment", () => {
     expect(workflow).toContain("needs.deploy-production.result == 'success'");
     expect(workflow).toContain("git push origin \"refs/tags/$release_tag\"");
