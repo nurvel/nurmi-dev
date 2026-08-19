@@ -14,8 +14,16 @@ const HOST = "127.0.0.1";
 const FONT_PATH = "/fonts/roboto-condensed-latin-wght-normal.woff2";
 const TARGET = join(ROOT, "target", "font-delivery-evidence.json");
 const FONT_DELAY_MS = 750;
+const GOOGLE_FONT_HOSTS = new Set(["fonts.googleapis.com", "fonts.gstatic.com"]);
 const VIEWPORTS = [{ name: "desktop", width: 1440, height: 900, mobile: false }, { name: "mobile", width: 390, height: 844, mobile: true }];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function isGoogleFontUrl(value) {
+  try {
+    return GOOGLE_FONT_HOSTS.has(new URL(value).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 async function removeProfile(profile) {
   for (let attempt = 0; attempt < 20 && existsSync(profile); attempt++) {
     try { rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch (error) { if (attempt === 19) throw error; }
@@ -116,7 +124,15 @@ async function collect(profile, viewport, base, chrome) {
         return { fontsReady:true, weights:readyWeights, bodyFamily:family(body), synthesis:getComputedStyle(document.documentElement).fontSynthesis, preFont, postFont, boxes, performance:{...window.__fontEvidence, paints:((window.__fontEvidence && window.__fontEvidence.paints) || []).length ? window.__fontEvidence.paints : performance.getEntriesByType('paint').map(e => ({name:e.name,startTime:e.startTime}))} };
       })()` });
     const value = result.result.value;
-    const fontRequests = requests.filter((r) => r.url.includes("/fonts/") || r.url.includes("fonts.googleapis.com") || r.url.includes("fonts.gstatic.com"));
+    const baseOrigin = new URL(base).origin;
+    const fontRequests = requests.filter((r) => {
+      try {
+        const parsed = new URL(r.url);
+        return (parsed.origin === baseOrigin && parsed.pathname.startsWith("/fonts/")) || isGoogleFontUrl(r.url);
+      } catch {
+        return false;
+      }
+    });
     const blockedExternal = requests.filter((r) => !r.url.startsWith(base) && /googletagmanager\.com|google-analytics\.com/.test(r.url)).map((r) => ({ ...r, url: new URL(r.url).origin + new URL(r.url).pathname }));
     const external = requests.filter((r) => !r.url.startsWith(base) && !/googletagmanager\.com|google-analytics\.com/.test(r.url));
     const font = fontRequests.find((r) => r.url.includes(FONT_PATH));
@@ -124,7 +140,7 @@ async function collect(profile, viewport, base, chrome) {
     const noLateSwap = JSON.stringify(value.preFont.body) === JSON.stringify(value.postFont.body) && JSON.stringify(value.preFont.bodyText) === JSON.stringify(value.postFont.bodyText);
     const shift = (value.performance?.shifts || []).reduce((sum, e) => sum + e.value, 0);
     const unexpectedFailures = failures.filter((f) => f.errorText !== "net::ERR_BLOCKED_BY_CLIENT");
-    const pass = !!font && font.status === 200 && !fontRequests.some((r) => /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(r.url)) && external.length === 0 && value.fontsReady && value.weights.every((w) => w.loaded) && /Roboto Condensed/i.test(value.bodyFamily) && value.synthesis === "none" && shift === 0 && stable && noLateSwap && unexpectedFailures.length === 0;
+    const pass = !!font && font.status === 200 && !fontRequests.some((r) => isGoogleFontUrl(r.url)) && external.length === 0 && value.fontsReady && value.weights.every((w) => w.loaded) && /Roboto Condensed/i.test(value.bodyFamily) && value.synthesis === "none" && shift === 0 && stable && noLateSwap && unexpectedFailures.length === 0;
     return { viewport: { name: viewport.name, width: viewport.width, height: viewport.height, mobile: viewport.mobile }, fontDelayMs: FONT_DELAY_MS, fontPolicy: process.env.FONT_DISPLAY_POLICY || "production", fontRequests, externalRequests: external, blockedExternalRequests: blockedExternal, requiredWeights: value.weights, computedFamily: { body: value.bodyFamily }, fontSynthesis: value.synthesis, paint: value.performance?.paints || [], layoutShift: { entries: value.performance?.shifts || [], cumulative: shift }, firstPaint: value.preFont, postFontReady: value.postFont, noLateSwap, boundingBoxes: value.boxes, chrome: { product: version.Browser, protocol: version["Protocol-Version"] }, pass };
   } finally { if (cdp) cdp.close(); try { browser.kill("SIGTERM"); } catch {} await Promise.race([lifecycle.settled, wait(1000)]); try { browser.kill("SIGKILL"); } catch {} await Promise.race([lifecycle.settled, wait(3000)]); }
 }
