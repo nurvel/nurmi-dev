@@ -5,10 +5,7 @@ on:
     branches: [main]
   push:
     branches:
-      - main
-      - 'feature/**'
-      - 'fix/**'
-      - 'chore/**'
+      - '**'
   workflow_dispatch:
 
 permissions:
@@ -25,9 +22,14 @@ jobs:
   validate:
     name: validate
     runs-on: ubuntu-latest
+    outputs:
+      build_identity: ${{ steps.identity.outputs.build_identity }}
+      release_tag: ${{ steps.identity.outputs.release_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -38,14 +40,49 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
+      - name: Determine build identity
+        id: identity
+        shell: bash
+        run: |
+          git fetch --tags --force
+          release_tag=""
+
+          if [[ "$GITHUB_REF" == "refs/heads/main" && ("$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "workflow_dispatch") ]]; then
+            existing_tag="$(git tag --points-at "$GITHUB_SHA" --list 'v*.*.*' --sort=version:refname | tail -n 1)"
+            if [[ -n "$existing_tag" ]]; then
+              release_tag="$existing_tag"
+            else
+              latest_tag="$(git tag --list 'v*.*.*' --sort=-version:refname | head -n 1)"
+              if [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+                major="${BASH_REMATCH[1]}"
+                minor="${BASH_REMATCH[2]}"
+                patch="${BASH_REMATCH[3]}"
+              else
+                major=0
+                minor=0
+                patch=0
+              fi
+              release_tag="v${major}.${minor}.$((patch + 1))"
+            fi
+            build_identity="$release_tag"
+          else
+            build_identity="preview-${GITHUB_SHA:0:7}"
+          fi
+
+          echo "build_identity=$build_identity" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "Build identity: $build_identity"
+
       - name: Run tests
         run: npm test
 
-      - name: Build production assets
+      - name: Build validated assets
+        env:
+          VITE_RELEASE_VERSION: ${{ steps.identity.outputs.build_identity }}
         run: npm run build
 
       - name: Upload build artifact
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ github.sha }}
@@ -124,7 +161,7 @@ jobs:
 
   deploy-production:
     name: deploy-production
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: validate
     runs-on: ubuntu-latest
     environment:
@@ -166,3 +203,49 @@ jobs:
             cat /tmp/wrangler-production.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  release-production:
+    name: tag and release production
+    if: needs.deploy-production.result == 'success' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    needs: [validate, deploy-production]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Allocate stable tag and create release idempotently
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          release_tag="$RELEASE_TAG"
+
+          if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid stable release tag: $release_tag"
+            exit 1
+          fi
+
+          tag_commit="$(git rev-list -n 1 "$release_tag" 2>/dev/null || true)"
+          if [[ -n "$tag_commit" && "$tag_commit" != "$GITHUB_SHA" ]]; then
+            echo "Tag $release_tag already points to $tag_commit, not $GITHUB_SHA"
+            exit 1
+          fi
+          if [[ -z "$tag_commit" ]]; then
+            git tag "$release_tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$release_tag"
+          else
+            echo "Tag $release_tag already points to this deployed commit"
+          fi
+
+          if gh release view "$release_tag" >/dev/null 2>&1; then
+            echo "GitHub Release $release_tag already exists"
+          else
+            gh release create "$release_tag" --verify-tag --generate-notes --title "$release_tag"
+          fi
