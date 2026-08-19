@@ -46,7 +46,7 @@
     "@types/react-gtm-module": "^2.0.3",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "jsdom": "^30.0.1",
-    "vite": "^7.3.6",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10",
     "wrangler": "^4.123.0"
   }
