@@ -41,7 +41,7 @@ ci-cd-canary
 → ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
-For a branch with an open pull request to `main`, the workflow adds or updates one sticky PR comment with a clickable **Open preview** link. The same link is also available in the workflow run summary. A branch push without an associated PR gets the summary link only.
+The workflow publishes the preview URL as a GitHub Deployment Environment URL. For a branch with an open pull request to `main`, GitHub exposes it in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run.
 
 Preview deployment does not promote production.
 
