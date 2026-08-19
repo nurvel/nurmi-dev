@@ -34,12 +34,14 @@ npm run build
 git push -u origin HEAD
 ```
 
-A pull request to `main` runs validation only. A push to any repository branch runs validation and then uploads a Worker preview version, except that `main` continues to production. Preview aliases are normalized DNS-safe branch slugs, for example:
+A pull request to `main` runs validation only. A push to any normal non-main repository branch runs validation and then uploads a Worker preview version, except that `main` continues to production. Dependabot branch pushes run validation only because GitHub does not expose repository Cloudflare secrets to those automated branches. Preview aliases are normalized DNS-safe branch slugs, for example:
 
 ```text
 ci-cd-canary
 → ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
+
+The workflow publishes the preview URL as a GitHub Deployment Environment URL. For a branch with an open pull request to `main`, GitHub exposes it in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run.
 
 Preview deployment does not promote production.
 
@@ -94,10 +96,7 @@ Repository-level Actions secrets:
 
 These are repository secrets, not Environment secrets. Do not expose them to pull request validation or commit them to the repository.
 
-SonarCloud is optional and remains skipped until both repository variables below are configured:
-
-- `SONAR_PROJECT_KEY`
-- `SONAR_ORGANIZATION`
+SonarQubeCloud is used as the complementary quality tool through its GitHub App. It reports PR analysis and comments independently from the repository workflows; the old repository Sonar Actions workflow was removed. Before adding its result as a required merge gate, verify that the Sonar project uses `main` as its default branch and that the Quality Gate is computed consistently.
 
 ## Cutover and rollback
 

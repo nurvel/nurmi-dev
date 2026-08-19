@@ -30,6 +30,14 @@ describe("production release workflow contract", () => {
     );
   });
 
+  it("publishes the preview URL as a GitHub deployment environment link", () => {
+    expect(workflow).toContain("deployments: write");
+    expect(workflow).toContain("name: preview-${{ github.ref_name }}");
+    expect(workflow).toContain("url: ${{ steps.preview.outputs.preview_url }}");
+    expect(workflow).toContain("id: preview");
+    expect(workflow).toContain('echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"');
+  });
+
   it("creates the tag only after successful deployment", () => {
     expect(workflow).toContain("needs.deploy-production.result == 'success'");
     expect(workflow).toContain("git push origin \"refs/tags/$release_tag\"");

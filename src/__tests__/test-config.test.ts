@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 describe("Vitest discovery isolation", () => {
   it("excludes linked worktrees while preserving Vitest defaults", () => {
     const configSource = fs.readFileSync(
-      path.join(process.cwd(), "vite.config.ts"),
+      path.join(process.cwd(), "vite.config.mts"),
       "utf8",
     );
 

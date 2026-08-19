@@ -49,6 +49,7 @@ The deployment workflow is documented in [`docs/ci-cd.md`](docs/ci-cd.md). In sh
 
 ```text
 any non-main branch → CI → Worker preview version
+Dependabot branch push → CI only (no preview; Cloudflare secrets are unavailable)
 merge to main → CI → Worker production deployment
 successful main deployment → next vX.Y.Z tag → GitHub Release
 ```
