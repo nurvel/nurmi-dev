@@ -20,7 +20,7 @@ describe("build identity footer", () => {
     expect(footer).toHaveTextContent("Version v1.2.3");
     expect(releaseLink).toHaveAttribute(
       "href",
-      "https://github.com/nurvel/nurvel.github.io/releases",
+      "https://github.com/nurvel/nurmi-dev/releases",
     );
     expect(releaseLink).toHaveAttribute("target", "_blank");
     expect(releaseLink).toHaveAttribute("rel", "noopener noreferrer");
