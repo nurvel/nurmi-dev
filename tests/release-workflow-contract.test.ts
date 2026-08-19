@@ -11,7 +11,7 @@ describe("production release workflow contract", () => {
   it("runs on every branch push while keeping pull requests validate-only", () => {
     expect(workflow).toContain("  push:\n    branches:\n      - '**'");
     expect(workflow).toContain(
-      "if: github.event_name == 'push' && github.ref != 'refs/heads/main'",
+      "    if: >-\n      github.event_name == 'push' &&\n      github.ref != 'refs/heads/main' &&\n      !startsWith(github.ref, 'refs/heads/dependabot/')",
     );
     expect(workflow).toContain("pull_request:\n    branches: [main]");
   });
