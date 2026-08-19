@@ -34,7 +34,7 @@ describe("production release workflow contract", () => {
 
   it("publishes the preview URL as a GitHub deployment environment link", () => {
     expect(workflow).toContain("deployments: write");
-    expect(workflow).toContain("name: preview-${{ github.ref_name }}");
+    expect(workflow).toContain("name: preview");
     expect(workflow).toContain("url: ${{ steps.preview.outputs.preview_url }}");
     expect(workflow).toContain("id: preview");
     expect(workflow).toContain('echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"');

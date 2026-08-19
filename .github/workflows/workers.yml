@@ -104,7 +104,7 @@ jobs:
       contents: read
       deployments: write
     environment:
-      name: preview-${{ github.ref_name }}
+      name: preview
       url: ${{ steps.preview.outputs.preview_url }}
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -189,7 +189,7 @@ jobs:
           script: |
             const branch = context.payload.pull_request.head.ref;
             const headOwner = context.payload.pull_request.head.repo?.owner.login;
-            const environment = `preview-${branch}`;
+            const environment = "preview";
 
             if (!headOwner) {
               core.info(`No head repository owner found for ${branch}; nothing to clean.`);
