@@ -13,7 +13,9 @@ describe("production release workflow contract", () => {
     expect(workflow).toContain(
       "    if: >-\n      github.event_name == 'push' &&\n      github.ref != 'refs/heads/main' &&\n      !startsWith(github.ref, 'refs/heads/dependabot/')",
     );
-    expect(workflow).toContain("pull_request:\n    branches: [main]");
+    expect(workflow).toContain(
+      "pull_request:\n    branches: [main]\n    types: [opened, synchronize, reopened, closed]",
+    );
   });
 
   it("serializes main runs without cancellation", () => {
@@ -36,6 +38,15 @@ describe("production release workflow contract", () => {
     expect(workflow).toContain("url: ${{ steps.preview.outputs.preview_url }}");
     expect(workflow).toContain("id: preview");
     expect(workflow).toContain('echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"');
+  });
+
+  it("removes closed pull request preview deployments", () => {
+    expect(workflow).toContain("cleanup-preview:");
+    expect(workflow).toContain("github.event.action == 'closed'");
+    expect(workflow).toContain("repos.listDeployments");
+    expect(workflow).toContain("repos.createDeploymentStatus");
+    expect(workflow).toContain("state: \"inactive\"");
+    expect(workflow).toContain("repos.deleteDeployment");
   });
 
   it("creates the tag only after successful deployment", () => {
