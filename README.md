@@ -66,3 +66,7 @@ publishing source in repository settings.
 by `npm run build`. It is never committed to the repository. GitHub Actions uploads the
 validated artifact to Cloudflare Workers Static Assets; there is no local GitHub Pages deploy
 script.
+
+### Project planning
+
+Project intent and planning conventions live in [`PRODUCT.md`](PRODUCT.md) and [`docs/project-conventions.md`](docs/project-conventions.md). The source map is [`docs/project-management.yaml`](docs/project-management.yaml), and the local Backlog.md baseline is [`backlog/config.yml`](backlog/config.yml). The backlog is intentionally empty during this migration; future population is a separate Product/PO decision.

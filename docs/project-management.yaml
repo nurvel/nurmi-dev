@@ -1,0 +1,17 @@
+schema: k8-project-management
+schema_version: 1.0.0
+project: nurmi-dev
+product:
+  canonical_source: repository
+  reference: PRODUCT.md
+roadmap:
+  canonical_source: repository
+  reference: backlog/
+backlog:
+  canonical_source: repository
+  reference: backlog/
+implementation:
+  canonical_source: repository
+  reference: .
+execution:
+  canonical_source: none
