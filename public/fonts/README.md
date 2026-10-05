@@ -1,22 +1,11 @@
-# Roboto Condensed — vendored font assets
+# Locally served typefaces
 
-Source: `@fontsource-variable/roboto-condensed` v5.3.0 (OFL-1.1)
-Tarball: https://registry.npmjs.org/@fontsource-variable/roboto-condensed/-/roboto-condensed-5.3.0.tgz
+Fonts are vendored from Fontsource v5.3.0 npm packages and licensed under SIL Open Font License 1.1. Source tarballs used for this site redesign: `@fontsource-variable/inter`, `@fontsource-variable/space-grotesk`, and `@fontsource/caveat` (version 5.3.0). Each license is included beside its font.
 
-## Vendored files
+| File | Family / subset / weight | SHA-256 |
+|---|---|---|
+| `inter-latin-wght-normal.woff2` | Inter, variable 100–900, Latin | `3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62` |
+| `space-grotesk-latin-wght-normal.woff2` | Space Grotesk, variable 300–700, Latin | `0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d` |
+| `caveat-latin-600-normal.woff2` | Caveat, 600, Latin | `d51e2283010e661d9f3dafdc9ff4b82b2ebcb2f7aa43ca48a105f5f68d46cc32` |
 
-| File | Tarball member | SHA-256 |
-|------|----------------|---------|
-| `roboto-condensed-latin-wght-normal.woff2` | `package/files/roboto-condensed-latin-wght-normal.woff2` | `8d230115e58faa2ed303bee567b91d1a792e0c958a0118998b53648b2ab7c057` |
-| `OFL.txt` | `package/LICENSE` | `82baba1bc6be17e47b138e90ab99ad134168f931282b68bc560102ab1db743c1` |
-
-## Scope
-
-Upright (non-italic) Latin subset only. The variable weight axis covers the full 300–700 range, so it satisfies all weights currently used by the site (300, 400, 500, 600, 700) without needing separate static files or browser-side synthesis.
-
-## Update procedure
-
-1. Check `@fontsource-variable/roboto-condensed` on npm for a newer version.
-2. Download the new tarball from `https://registry.npmjs.org/@fontsource-variable/roboto-condensed/-/roboto-condensed-<VERSION>.tgz`.
-3. Extract and verify the SHA-256 of `package/files/roboto-condensed-latin-wght-normal.woff2` against the newly published value.
-4. Replace the file here, update this table, and re-run `fc-scan` to confirm coverage still includes weights 300–700.
+Inter and Space Grotesk supply the site UI and labels; Caveat supplies the decorative contact note. The previous Roboto Condensed file remains for legacy surfaces. No runtime font package dependency or third-party font request is used. All three active faces are preloaded and use `font-display: optional` to preserve the no-late-swap contract on slow connections. `npm run font:check` checks delayed cold-load geometry, real keyboard focus, network behavior and cleanup; its screenshots are taken separately after an unthrottled reload.

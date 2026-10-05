@@ -2,10 +2,6 @@ import React, { ReactNode } from "react";
 import styled from "styled-components";
 
 const Section = styled.section<{ $background?: string }>`
-  min-height: ${({ theme }) => theme.layout.sectionMinHeight};
-  padding: ${({ theme }) => theme.layout.sectionPadding};
-  display: flex;
-  justify-content: center;
   width: 100%;
   position: relative;
   background-color: ${({ $background, theme }) =>
