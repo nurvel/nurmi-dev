@@ -17,12 +17,13 @@ export function isBookkeepingOnly(paths) {
   );
 }
 
+// The workflow uses Ubuntu runners. Pin Git instead of trusting a caller-controlled PATH.
 function git(args) {
-  return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  return execFileSync("/usr/bin/git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 }
 
 function changedPaths(base, sha) {
-  const output = execFileSync("git", ["diff", "--no-renames", "--name-only", "-z", `${base}..${sha}`], {
+  const output = execFileSync("/usr/bin/git", ["diff", "--no-renames", "--name-only", "-z", `${base}..${sha}`], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   });

@@ -112,6 +112,15 @@ describe("deployment publication policy", () => {
       const before = commit("PRODUCT.md", "bookkeeping one");
       const target = commit("docs/project-conventions.md", "bookkeeping two");
       expect(shouldDeploy({ eventName: "push", before, sha: target })).toBe(false);
+      const originalPath = process.env.PATH;
+      try {
+        // The CI policy must not execute a Git binary from a caller-controlled PATH.
+        process.env.PATH = scratch;
+        expect(shouldDeploy({ eventName: "push", before, sha: target })).toBe(false);
+      } finally {
+        if (originalPath === undefined) delete process.env.PATH;
+        else process.env.PATH = originalPath;
+      }
       const sourceTarget = commit("src/App.tsx", "changed source");
       expect(shouldDeploy({ eventName: "push", before, sha: sourceTarget })).toBe(true);
 
