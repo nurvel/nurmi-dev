@@ -4,7 +4,7 @@ title: Publish Aito Nurmi Integrations documentation
 status: In Progress
 assignee: []
 created_date: '2026-10-05 10:19'
-updated_date: '2026-10-05 11:22'
+updated_date: '2026-10-05 11:45'
 labels: []
 dependencies: []
 type: feature
@@ -31,4 +31,6 @@ Owner-approved public /docs/ section; PO-approved bounded static-documentation i
 Implemented the four static documents and shared stylesheet. Local tests, build, preview byte parity, route checks and desktop/mobile browser checks passed. Independent review, required GitHub human approval and production readback remain pending; acceptance 4 is not complete.
 
 Owner-approved refinement replaces the preview-only hermes-integrations routes with the Google provider hierarchy and English documents. Earlier review evidence applies to the old snapshot only. Fresh local/browser checks, independent review and required GitHub approval remain publication gates.
+
+Owner approved publication after removing the shared documentation menu. Navigation is now contextual: documentation index to Google overview, then its Privacy and terms section to the two documents. No replacement menu, permission expansion or policy-copy change. Required GitHub approval and exact-snapshot validation remain intact; production acceptance stays open until actual deployment readback.
 <!-- SECTION:NOTES:END -->

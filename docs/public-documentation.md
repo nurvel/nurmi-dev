@@ -16,6 +16,8 @@ Every document has its own title, description, canonical URL, one H1 and `noinde
 
 ## Adding a case
 
+Keep the documents free of a shared navigation menu. The documentation index links to the Google overview; the overview's Privacy and terms section links to its Privacy Policy and Terms of Use. Policy documents retain only contextual references in their prose. Do not promote policy pages to sibling entries beside providers or add a replacement navigation bar.
+
 Add a real, approved case under an appropriate category, such as `public/docs/integrations/<provider>/index.html`, with its own policy/terms pages where appropriate. The index links directly to the existing Google case; no empty intermediate `/docs/integrations/` page is required. Use provider identity rather than a technical Google Cloud project ID for navigation. Reuse the shared stylesheet and accessible document layout. Add the case to the documentation index and update the route/navigation tests. Do not create empty future pages, a CMS, a search service or a separate hosting project.
 
 The owner selected Aito Nurmi Integrations as the public OAuth application name. The OAuth name, Cloud project display name, individual clients and consumer use cases are separate concepts. Keep descriptions consistent with the actual consent-screen name; a public name or route change does not enable providers, expand scopes or require new clients by itself. The prior `/docs/hermes-integrations/` routes were preview-only and were replaced before production publication; no production redirect is introduced.

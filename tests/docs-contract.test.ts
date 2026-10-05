@@ -22,6 +22,7 @@ describe("public documentation", () => {
     expect(document.documentElement.lang).toBe("en");
     expect(document.title).toContain(title);
     expect(document.querySelectorAll("h1")).toHaveLength(1);
+    expect(document.querySelectorAll('nav, [role="navigation"]')).toHaveLength(0);
     expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toBeTruthy();
     expect(document.querySelector('meta[name="robots"]')?.getAttribute("content")).toBe("noindex, nofollow");
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(`https://nurmi.dev${route}`);
@@ -32,6 +33,19 @@ describe("public documentation", () => {
 
     const links = [...document.querySelectorAll("a[href]")];
     expect(links.length).toBeGreaterThan(0);
+    const documentLinks = links
+      .map((link) => link.getAttribute("href")!)
+      .filter((href) => href.startsWith("/docs/"));
+    const expectedDocumentLinks: Record<string, string[]> = {
+      "/docs/": ["/docs/integrations/google/"],
+      "/docs/integrations/google/": [
+        "/docs/integrations/google/privacy/",
+        "/docs/integrations/google/terms/",
+      ],
+      "/docs/integrations/google/privacy/": ["/docs/integrations/google/"],
+      "/docs/integrations/google/terms/": ["/docs/integrations/google/privacy/"],
+    };
+    expect(documentLinks).toEqual(expectedDocumentLinks[route]);
     for (const link of links) {
       const href = link.getAttribute("href")!;
       if (href.startsWith("/docs/")) {
