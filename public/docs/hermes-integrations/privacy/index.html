@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="KHH Search Console -integraation tiedot, käsittelytavat ja tietosuojakuvauksen rajaukset.">
+  <title>Tietosuoja | nurmi.dev</title>
+  <link rel="canonical" href="https://nurmi.dev/docs/hermes-integrations/privacy/">
+  <link rel="stylesheet" href="/docs/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Siirry sisältöön</a>
+  <main id="content">
+    <nav aria-label="Dokumentaatio"><a href="/">nurmi.dev</a><a href="/docs/">Dokumentaatio</a><a href="/docs/hermes-integrations/">Hermes Integrations</a><a href="/docs/hermes-integrations/privacy/" aria-current="page">Tietosuoja</a><a href="/docs/hermes-integrations/terms/">Käyttöehdot</a></nav>
+    <h1>Tietosuoja</h1>
+    <p>Tämä tietosuojakuvaus koskee <strong>KHH Search Console</strong> -sovelluksen Google Search Console- ja Tag Manager -integraatioita Hermes Integrations -kokonaisuudessa. Se ei korvaa Kauneushoitola Hannan asiakkaiden tietosuojaselostetta.</p>
+<h2>Ylläpitäjä ja yhteys</h2><p>Veli-Pekka Nurmi<br><a href="mailto:nurmi.vp@gmail.com">nurmi.vp@gmail.com</a></p>
+<h2>Luettavat tiedot ja käyttötarkoitus</h2>
+<p>Search Console -yhteys voi lukea valtuutettujen sivustojen tietoja, kuten hakukyselyjä, sivuosoitteita, näyttökertoja ja klikkauksia. Tag Manager -yhteys voi lukea valtuutettujen tilien ja konttien tietoja ja asetuksia. Käyttötarkoitus on omistajan hyväksymä raportointi ja tekninen tarkistaminen.</p>
+<p>Pyydettävät Google-oikeudet ovat <code>webmasters.readonly</code> ja <code>tagmanager.readonly</code>. Sovelluksen <a href="/docs/hermes-integrations/">esittelysivu</a> sisältää niiden täydelliset tunnisteet.</p>
+<h2>Valtuutustiedot ja rajapintatulokset</h2>
+<p>Google OAuth tuottaa valtuutustietoja, joita paikallinen integraatio käyttää rajapintapyyntöihin. Käytössä olevan Tag Manager -yhteyden valtuutustiedostot säilytetään paikallisesti käyttöoikeuksiltaan rajatussa hakemistossa, erillään näistä verkkosivuista.</p>
+<p>Valtuutustiedostojen paikallinen säilytys ei tarkoita, että kaikki luetut rajapintatulokset pysyvät vain samalla koneella. Tuloksia voi tallentua raportteihin ja avustajan keskusteluhistoriaan.</p>
+<h2>Tietojen käsittely ja vastaanottajat</h2>
+<p>Google käsittelee valtuutusta ja rajapintapyyntöjä omien palveluehtojensa mukaisesti. Omistaja ja hänen valtuuttamansa operaattori voivat käsitellä tuloksia paikallisilla työkaluilla ja Hermes-avustajalla.</p>
+<p>Hermes-avustajalle annettuja rajapintatuloksia voi välittyä sen kulloinkin määritetylle pilvimallipalvelulle. Tähän käyttöön kuuluu OpenAI:n palvelun käyttö. Käsittely riippuu siitä, mitä tietoja avustajalle annetaan ja mitä palvelua kyseinen työvaihe käyttää.</p>
+<p>Kaikkia mahdollisia loki- ja telemetriapalvelujen vastaanottajia, palveluntarjoajien säilytysaikoja tai mallien koulutusta koskevia asetuksia ei ole kokonaan vahvistettu. Tämä kuvaus ei sisällä lupausta palveluntarjoajien kouluttamattomuudesta eikä varmennettua Google Limited Use -vaatimustenmukaisuusväitettä.</p>
+<h2>Säilytys, valtuutuksen peruminen ja poistopyynnöt</h2>
+<p>Raporttien, keskusteluhistorian ja mahdollisten palveluntarjoajien lokien yhteistä säilytysaikaa tai automaattista poistomenettelyä ei ole vahvistettu. Tämä kuvaus ei lupaa määräaikaista tai automaattista poistamista.</p>
+<p>Google-valtuutuksen voi peruuttaa <a href="https://myaccount.google.com/connections">Google-tilin yhteyksien hallinnassa</a>. Peruminen ei itsessään poista aiemmin tallennettuja raportteja, keskusteluja tai muita kopioita.</p>
+<p>Käsittelyä koskevat kysymykset ja poistopyynnöt voi osoittaa ylläpitäjän sähköpostiin. Yhteystapa ei ole automaattinen poistotoiminto eikä lupaus tietyn poistopyynnön lopputuloksesta.</p>
+<h2>Näiden dokumenttisivujen tiedonkäsittely</h2>
+<p>Nämä staattiset dokumenttisivut eivät suorita Google-rajapintakutsuja tai sisällä analytiikkaa, lomakkeita tai seurantaskriptejä. Sivujen avaaminen ei käynnistä paikallista integraatiota eikä välitä sen rajapintatuloksia.</p>
+<p>Sivut tarjotaan Cloudflare Workers Static Assets -hostingilla. Verkkosivun toimittaminen välittää hosting-palvelulle teknisiä pyyntötietoja, kuten IP-osoitteen ja selaimen lähettämät tiedot. Palveluntarjoaja voi käsitellä käyttö- ja turvallisuuslokeja omien käytäntöjensä mukaisesti. Katso <a href="https://www.cloudflare.com/privacypolicy/">Cloudflaren tietosuojakäytäntö</a>.</p>
+<p class="notice">Tämä kuvaus kertoo tunnetut käsittelytavat ja niiden vahvistamisen rajat. Se ei ole todistus Googlen tarkastuksesta, sertifioinnista tai integraation tuotantovalmiudesta.</p>
+    <footer>Ylläpitäjä: Veli-Pekka Nurmi · Julkinen dokumentaatio</footer>
+  </main>
+</body>
+</html>
