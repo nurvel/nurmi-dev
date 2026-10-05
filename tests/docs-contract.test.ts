@@ -3,10 +3,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const routes = [
-  ["/docs/", "Dokumentaatio"],
-  ["/docs/hermes-integrations/", "Hermes Integrations"],
-  ["/docs/hermes-integrations/privacy/", "Tietosuoja"],
-  ["/docs/hermes-integrations/terms/", "Käyttöehdot"],
+  ["/docs/", "Documentation"],
+  ["/docs/integrations/google/", "Aito Nurmi Integrations"],
+  ["/docs/integrations/google/privacy/", "Privacy Policy"],
+  ["/docs/integrations/google/terms/", "Terms of Use"],
 ] as const;
 const root = process.cwd();
 const fileFor = (route: string) => path.join(root, "public", route, "index.html");
@@ -19,7 +19,7 @@ describe("public documentation", () => {
     const html = fs.readFileSync(file, "utf8");
     const document = new DOMParser().parseFromString(html, "text/html");
 
-    expect(document.documentElement.lang).toBe("fi");
+    expect(document.documentElement.lang).toBe("en");
     expect(document.title).toContain(title);
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toBeTruthy();

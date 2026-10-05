@@ -1,13 +1,13 @@
 # Public documentation
 
-The owner-approved `/docs/` area is for public application descriptions, privacy information and terms. Hermes Integrations is the first case. It is not a private wiki, API runtime or administrative interface.
+The owner-approved `/docs/` area is for English public application descriptions, privacy information and terms. Aito Nurmi Integrations is the first case, grouped under Google as a provider. KHH is its first reference use case, not its permanent product boundary. This is not a private wiki, API runtime or administrative interface.
 
 ## Source and routes
 
 - `public/docs/index.html` — documentation index at `/docs/`.
-- `public/docs/hermes-integrations/index.html` — first application description.
-- `public/docs/hermes-integrations/privacy/index.html` — privacy information.
-- `public/docs/hermes-integrations/terms/index.html` — terms.
+- `public/docs/integrations/google/index.html` — Google application description.
+- `public/docs/integrations/google/privacy/index.html` — privacy information.
+- `public/docs/integrations/google/terms/index.html` — terms.
 - `public/docs/styles.css` — shared document styles and existing first-party font.
 
 Vite copies these static files into `dist/`; Cloudflare Static Assets serves them directly. They do not load the React application's entry point or its tracking code. Do not move them behind the SPA fallback or add a client-side router just for these documents.
@@ -16,7 +16,9 @@ Every document has its own title, description, canonical URL, one H1 and `noinde
 
 ## Adding a case
 
-Add a real, approved case at `public/docs/<name>/index.html`, with its own policy/terms pages where appropriate. Reuse the shared stylesheet and accessible document layout. Add the case to the documentation index and update the route/navigation tests. Do not create empty future pages, a CMS, a search service or a separate hosting project.
+Add a real, approved case under an appropriate category, such as `public/docs/integrations/<provider>/index.html`, with its own policy/terms pages where appropriate. The index links directly to the existing Google case; no empty intermediate `/docs/integrations/` page is required. Use provider identity rather than a technical Google Cloud project ID for navigation. Reuse the shared stylesheet and accessible document layout. Add the case to the documentation index and update the route/navigation tests. Do not create empty future pages, a CMS, a search service or a separate hosting project.
+
+The owner selected Aito Nurmi Integrations as the public OAuth application name. The OAuth name, Cloud project display name, individual clients and consumer use cases are separate concepts. Keep descriptions consistent with the actual consent-screen name; a public name or route change does not enable providers, expand scopes or require new clients by itself. The prior `/docs/hermes-integrations/` routes were preview-only and were replaced before production publication; no production redirect is introduced.
 
 Publish only source-backed public information. Never include credentials, raw provider data, private paths or runtime/session records. Distinguish credential storage from API-result processing. Unknown recipient, training, retention and deletion practices must not be converted into reassuring promises. The first case's bounded disclosure is not evidence of Google verification, Production publishing status, Limited Use compliance or long-lived API readiness.
 

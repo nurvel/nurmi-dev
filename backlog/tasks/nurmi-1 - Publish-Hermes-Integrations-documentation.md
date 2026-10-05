@@ -1,10 +1,10 @@
 ---
 id: NURMI-1
-title: Publish Hermes Integrations documentation
+title: Publish Aito Nurmi Integrations documentation
 status: In Progress
 assignee: []
 created_date: '2026-10-05 10:19'
-updated_date: '2026-10-05 10:29'
+updated_date: '2026-10-05 11:22'
 labels: []
 dependencies: []
 type: feature
@@ -14,7 +14,7 @@ ordinal: 1000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Owner-approved public /docs/ section; PO-approved single bounded increment. Four standalone static pages with shared local CSS; no root navigation link, noindex, excluded from sitemap. Truthful descriptive privacy/terms with explicit unknown provider controls and retention; no Google compliance/readiness guarantees. Preserve existing PR/CI, independent review and required human approval. No OAuth/DNS/paid-service changes.
+Owner-approved public /docs/ section; PO-approved bounded static-documentation increment. Owner-approved refinement: four English standalone pages under /docs/ and /docs/integrations/google/, including privacy and terms, using Aito Nurmi Integrations as the public OAuth application name. Shared local CSS, no root navigation link, noindex, excluded from sitemap. Preserve truthful privacy disclosures, read-only Search Console and Tag Manager scope boundaries, existing PR/CI, independent exact-snapshot review and required human GitHub approval. Only the separately authorized existing OAuth display-name change is allowed; no new clients, scope expansion, DNS, billing or paid-service changes.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -29,4 +29,6 @@ Owner-approved public /docs/ section; PO-approved single bounded increment. Four
 
 <!-- SECTION:NOTES:BEGIN -->
 Implemented the four static documents and shared stylesheet. Local tests, build, preview byte parity, route checks and desktop/mobile browser checks passed. Independent review, required GitHub human approval and production readback remain pending; acceptance 4 is not complete.
+
+Owner-approved refinement replaces the preview-only hermes-integrations routes with the Google provider hierarchy and English documents. Earlier review evidence applies to the old snapshot only. Fresh local/browser checks, independent review and required GitHub approval remain publication gates.
 <!-- SECTION:NOTES:END -->
