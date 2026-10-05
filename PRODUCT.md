@@ -2,11 +2,13 @@
 
 ## Current purpose
 
-nurmi.dev is a public personal and professional website. Its current rendered experience is an About page that helps readers understand Veli-Pekka Nurmi's professional profile, roles, current focus, recent work, and public contact links.
+nurmi.dev is a public personal and professional website. Its primary rendered experience is an About page that helps readers understand Veli-Pekka Nurmi's professional profile, roles, current focus, recent work, and public contact links. A small, standalone `/docs/` area provides public application descriptions, privacy information and terms for the owner's integrations.
 
 ## Current behavior and boundary
 
 The application is a React + Vite static site. `src/App.tsx` currently renders the About page, and `src/data/siteContent.ts` is the source for its visible profile, role, focus, recent-work, and contact content. The site is built locally and published through the repository's documented GitHub Actions and Cloudflare Workers Static Assets workflow.
+
+The public documentation source is `public/docs/`: English standalone HTML with shared local CSS, without the About application's scripts or tracking. It is accessible by direct URL, marked `noindex`, excluded from the sitemap and unlinked from the About page. Its first case is Aito Nurmi Integrations at `/docs/integrations/google/`, covering currently approved Search Console and Tag Manager read-only connections. KHH is the first reference use case, not the permanent application name. Future approved cases can be added without empty placeholder pages or a separate documentation service. The documentation does not run those integrations, make Hermes a website dependency, authorize additional APIs or guarantee provider practices, OAuth approval or production readiness.
 
 The repository is the canonical implementation source. `docs/ci-cd.md` remains the detailed authority for branch, validation, preview, production publication, and release behavior. This product document does not authorize a publication or change that workflow.
 
