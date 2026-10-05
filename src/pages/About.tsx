@@ -22,7 +22,8 @@ const Name = styled.h1`font:500 clamp(2.5rem,5.55vw,5rem)/.98 var(--font-body);l
 const Lede = styled.p`font:400 clamp(1.05rem,1.6vw,1.3rem)/1.35 var(--font-body);color:var(--color-text-secondary);margin:0;max-width:480px;`;
 const PortraitWrap = styled.div`display:flex;justify-content:center;align-items:center;min-width:0;@media(max-width:820px){order:-1;}`;
 const PortraitBall = styled.div`position:relative;aspect-ratio:1;width:min(100%, 22vw, 360px);height:auto;max-height:100%;border-radius:50%;overflow:hidden;background:#f5f5f5;box-shadow:0 0 0 1px #e5e5e5,inset 0 1px 24px #0000000a;@media(max-width:820px){width:min(68vw,300px);}`;
-const Portrait = styled.img`position:absolute;width:137%;height:auto;left:-44%;top:2%;filter:grayscale(1) contrast(1.02);user-select:none;-webkit-user-drag:none;`;
+// The approved cutout intentionally exceeds the circle; override the global image reset.
+const Portrait = styled.img`position:absolute;width:137%;max-width:none;height:auto;left:-44%;top:2%;filter:grayscale(1) contrast(1.02);user-select:none;-webkit-user-drag:none;`;
 const Section = styled.section`padding-top:64px;`;
 const SectionHead = styled.div`display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--color-border);padding-bottom:12px;margin-bottom:32px;`;
 const SectionTitle = styled.h2`font:500 .75rem var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
