@@ -8,10 +8,10 @@ const read = (name: string) => fs.readFileSync(path.join(ROOT, name), "utf8");
 describe("production release workflow contract", () => {
   const workflow = read(".github/workflows/workers.yml");
 
-  it("runs on every branch push while keeping pull requests validate-only", () => {
-    expect(workflow).toContain("  push:\n    branches:\n      - '**'");
+  it("runs PR validation, excludes Dependabot pushes, and conditionally deploys non-main branches", () => {
+    expect(workflow).toContain("  push:\n    branches:\n      - '**'\n      - '!dependabot/**'");
     expect(workflow).toContain(
-      "    if: >-\n      github.event_name == 'push' &&\n      github.ref != 'refs/heads/main' &&\n      !startsWith(github.ref, 'refs/heads/dependabot/')",
+      "    if: >-\n      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&\n      github.ref != 'refs/heads/main' &&\n      !startsWith(github.ref, 'refs/heads/dependabot/') &&\n      needs.validate.outputs.deploy_required == 'true'",
     );
     expect(workflow).toContain(
       "pull_request:\n    branches: [main]\n    types: [opened, synchronize, reopened, closed]",
