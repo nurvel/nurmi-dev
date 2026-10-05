@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - '**'
+      - '!dependabot/**'
   workflow_dispatch:
 
 permissions:
@@ -27,11 +28,18 @@ jobs:
     outputs:
       build_identity: ${{ steps.identity.outputs.build_identity }}
       release_tag: ${{ steps.identity.outputs.release_tag }}
+      deploy_required: ${{ steps.publication.outputs.deploy_required }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Determine whether publication is required
+        id: publication
+        env:
+          CI_PUSH_BEFORE: ${{ github.event.before }}
+        run: node scripts/deploy-required.mjs
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -95,9 +103,10 @@ jobs:
   deploy-preview:
     name: deploy-preview
     if: >-
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref != 'refs/heads/main' &&
-      !startsWith(github.ref, 'refs/heads/dependabot/')
+      !startsWith(github.ref, 'refs/heads/dependabot/') &&
+      needs.validate.outputs.deploy_required == 'true'
     needs: validate
     runs-on: ubuntu-latest
     permissions:
@@ -196,6 +205,11 @@ jobs:
               return;
             }
 
+            if (context.payload.pull_request.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.info(`Skipping foreign fork branch ${headOwner}:${branch}; nothing to clean.`);
+              return;
+            }
+
             const openPullRequests = await github.paginate(
               github.rest.pulls.list,
               {
@@ -223,16 +237,16 @@ jobs:
             );
 
             for (const deployment of deployments) {
-              if (deployment.active) {
-                await github.rest.repos.createDeploymentStatus({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: deployment.id,
-                  state: "inactive",
-                  environment,
-                  description: "Preview removed after pull request closure.",
-                });
-              }
+              if (deployment.environment !== environment || deployment.ref !== branch) continue;
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+                state: "inactive",
+                auto_inactive: false,
+                environment,
+                description: "Preview removed after pull request closure.",
+              });
               await github.rest.repos.deleteDeployment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -243,7 +257,7 @@ jobs:
 
   deploy-production:
     name: deploy-production
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.validate.outputs.deploy_required == 'true'
     needs: validate
     runs-on: ubuntu-latest
     environment:

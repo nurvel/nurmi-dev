@@ -34,18 +34,18 @@ npm run build
 git push -u origin HEAD
 ```
 
-A pull request to `main` runs validation only. A push to any normal non-main repository branch runs validation and then uploads a Worker preview version, except that `main` continues to production. Dependabot branch pushes run validation only because GitHub does not expose repository Cloudflare secrets to those automated branches. Preview aliases are normalized DNS-safe branch slugs, for example:
+A pull request to `main` runs validation only, including Dependabot pull requests. Push events for `dependabot/**` branches are excluded entirely because their pull requests provide validation and those automated branches do not receive repository Cloudflare secrets. Other branch pushes run tests and build validation; a Worker preview is uploaded only when the complete pushed range contains a non-bookkeeping path. Main pushes follow the same publication decision before production deployment. Project bookkeeping means only `backlog/**`, `docs/project-management.yaml`, `docs/project-conventions.md`, `PRODUCT.md`, and `integrations/hermes/**`. Mixed changes publish; `public/docs/**`, workflow, script, test, app, build, and dependency changes are not bookkeeping. An unavailable or ambiguous comparison publishes conservatively. Manual workflow dispatch forces publication for its selected branch (production on `main`, preview otherwise), except that Dependabot branches remain excluded from secret-bearing preview jobs. Validation is never skipped by this publication optimization. Preview aliases are normalized DNS-safe branch slugs, for example:
 
 ```text
 ci-cd-canary
 → ci-cd-canary-nurmi-dev.nurmi-vp.workers.dev
 ```
 
-The workflow publishes each preview URL through the shared GitHub Deployment Environment `preview`. For a branch with an open pull request to `main`, GitHub exposes the branch's deployment in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run. When the pull request closes, a cleanup job marks that branch's preview deployments inactive and removes them from the deployment history. If another open pull request uses the same branch, cleanup is skipped.
+The workflow publishes each preview URL through the shared GitHub Deployment Environment `preview`. For a branch with an open pull request to `main`, GitHub exposes the branch's deployment in the PR's **Deployments** section as a clickable **View deployment** link. The same link is also available in the workflow run summary. A branch push without an associated PR still gets the deployment URL in the workflow run. When a same-repository pull request closes, cleanup paginates matching open PRs and deployments for the exact `preview` environment and head branch. It preserves deployments if another open PR uses that branch; foreign-fork PRs are skipped to avoid same-name branch collisions. Every selected deployment is marked inactive before deletion, and failed inactivation stops cleanup.
 
 Preview deployment does not promote production.
 
-After review, merge the pull request to `main`. The push to `main` runs validation again and then promotes the validated artifact with `wrangler deploy`.
+After review, merge the pull request to `main`. The push to `main` runs validation again and promotes the validated artifact with `wrangler deploy` unless the complete pushed range is bookkeeping-only. A bookkeeping-only main push does not deploy, create a release tag, or publish a GitHub Release.
 
 ## Release identity and tags
 
@@ -83,11 +83,10 @@ current Worker URL to the repository's Deployments view:
 - Production URL: `https://nurmi.dev/`
 - Worker fallback/debug URL: `https://nurmi-dev.nurmi-vp.workers.dev/`
 
-Preview deployments are intentionally not registered as GitHub deployment
-environments. Their branch-specific URLs are published in the Actions run
-summary, while Cloudflare retains the deployed version history. This keeps the
-repository's deployment list focused on production instead of accumulating
-short-lived preview records.
+Preview deployments use the shared GitHub `preview` environment described
+above, which makes their URLs visible from workflow runs and associated pull
+requests. Closed-PR cleanup removes matching GitHub deployment records; it does
+not delete Cloudflare Worker versions or affect production deployments.
 
 Repository-level Actions secrets:
 
