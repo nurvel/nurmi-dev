@@ -10,6 +10,7 @@ export interface WorkItem {
   client: string;
   title: string;
   description: string;
+  role: string;
   href?: string;
 }
 export type AboutParagraph = Array<{ text: string; href?: string; emphasis?: boolean }>;
@@ -28,19 +29,20 @@ export interface RecentWorkItemData { highlight: string; textA: string; linkLabe
 export interface ContactLink { label: string; href: string }
 
 export const aboutSiteContent: AboutSiteContent = {
-  profile: { name: "Veli-Pekka Nurmi", nameLines: ["Veli-Pekka", "Nurmi"], location: "Helsinki, FI", role: "Product Engineer", subtitle: "15+ years connecting business goals with technology.", avatarAlt: "Veli-Pekka Nurmi portrait" },
+  profile: { name: "Veli-Pekka Nurmi", nameLines: ["Veli-Pekka", "Nurmi"], location: "Helsinki, FI", role: "Product Engineer", subtitle: "15+ years connecting business goals with technology. Working with software systems from problem framing to production.", avatarAlt: "Veli-Pekka Nurmi portrait" },
   about: [
-    [{ text: "I work across SaaS platforms, private-sector digital services, and public-sector systems — in technical, product, and leadership roles." }],
+    [{ text: "I work across SaaS platforms, private-sector digital services, and public-sector systems in technical, product, and leadership roles." }],
     [{ text: "Currently a Senior Software Developer at " }, { text: "Nitor", href: "https://nitor.com/en" }, { text: ", working with " }, { text: "agentic coding", emphasis: true }, { text: " and " }, { text: "spec-driven development", emphasis: true }, { text: " in real delivery. AI accelerates implementation; humans still own architecture, requirements, and product direction." }],
     [{ text: "The AI era is reshaping how software gets specified, built, and evolved. My span across business, product, and technology is built for exactly that shift." }]
   ],
   roles: ["Technical Product Owner", "Full-Stack Developer", "Head of R&D", "Performance Marketer"],
   recentWorkTitle: "Recent work",
   recentWork: [
-    { client: "HSL · via Twoday", title: "Contract monitoring system", description: "Expanding into multi-modal transport visibility and proactive contract KPIs and compensations to operators." },
-    { client: "Aidon · via Twoday", title: "Configuration UI", description: "Schema-driven forms with a durable persistence model for utilities." },
-    { client: "SaaShop", title: "SaaS marketplace", description: "Grew ARR to EUR 1.4M while improving reliability, reducing customer support feedback, and expanding the SMB customer base." },
-    { client: "Kauneushoitola Hanna", title: "Website & SEO", description: "Created and optimised a site for a local beauty salon. Achieved #1 ranking for “Kosmetologi Järvenpää”.", href: "https://kauneushoitolahanna.fi" }
+    { client: "VR LOGISTICS - VIA NITOR", title: "Logistics visibility platform", description: "Real-time map-based shipment tracking, schedules, and reporting, available 24/7, including on mobile. Accessible transport data helps streamline, refine, and automate logistics operations.", role: "Full-Stack Developer" },
+    { client: "HSL · via Twoday", title: "Contract monitoring system", description: "Expanding into multi-modal transport visibility and proactive contract KPIs and compensations to operators.", role: "Tecnical Product Owner" },
+    { client: "Aidon · via Twoday", title: "Configuration UI", description: "Schema-driven forms with a durable persistence model for utilities.", role: "Full-Stack Developer" },
+    { client: "SaaShop", title: "SaaS marketplace", description: "Grew ARR to EUR 1.4M while improving reliability, reducing customer support feedback, and expanding the SMB customer base.", role: "Head of R&D" },
+    { client: "Kauneushoitola Hanna", title: "Website & SEO", description: "Created and optimised a site for a local beauty salon. Achieved #1 ranking for “Kosmetologi Järvenpää”.", href: "https://kauneushoitolahanna.fi", role: "Performance Marketer & Full-Stack Developer" }
   ],
   contactPrompt: "Got a product or platform that needs a steady hand?",
   contacts: [

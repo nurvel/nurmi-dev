@@ -12,10 +12,10 @@ describe("approved one-page profile content", () => {
     expect(screen.getByText(aboutSiteContent.profile.subtitle)).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "About" })).toBeInTheDocument();
   });
-  it("renders four titled work cards and preserves the client destination", () => {
+  it("renders five titled work cards and preserves the client destination", () => {
     const section = screen.getByRole("heading", { level: 2, name: "Recent work" }).closest("section");
     expect(section).toBeTruthy();
-    expect(within(section as HTMLElement).getAllByRole("heading", { level: 3 })).toHaveLength(4);
+    expect(within(section as HTMLElement).getAllByRole("heading", { level: 3 })).toHaveLength(5);
     expect(screen.getByRole("link", { name: /Created and optimised/ })).toHaveAttribute("href", "https://kauneushoitolahanna.fi");
   });
   it("exposes contact links with accessible labels and safe external targets", () => {
@@ -35,11 +35,12 @@ describe("approved one-page profile content", () => {
       expect(screen.getByText(phrase).tagName).toBe("STRONG");
     }
     const cards = screen.getAllByRole("article");
-    expect(cards).toHaveLength(4);
+    expect(cards).toHaveLength(5);
     aboutSiteContent.recentWork.forEach((item, index) => {
       expect(cards[index]).toHaveTextContent(item.client);
       expect(within(cards[index]).getByRole("heading", { level: 3 })).toHaveTextContent(item.title);
       expect(cards[index]).toHaveTextContent(item.description);
+      expect(cards[index].lastElementChild).toHaveTextContent(item.role);
     });
     expect(document.body.textContent).toContain('#1 ranking for “Kosmetologi Järvenpää”');
     expect(document.body.textContent).not.toMatch(/Built with care|Available for select work/);

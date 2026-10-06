@@ -164,7 +164,7 @@ async function collect(profile, viewport, base, chrome) {
     const unexpectedFailures = failures.filter((f) => f.errorText !== "net::ERR_BLOCKED_BY_CLIENT");
     const expectedColumns = viewport.width >= 901 ? 3 : viewport.width >= 561 ? 2 : 1;
     const qa = value.browserQA;
-    const browserPass = qa.noHorizontalOverflow && qa.mainCount === 1 && qa.h1Count === 1 && qa.aboutHeading && qa.workHeading && qa.cardCount === 4 && qa.cardColumns === expectedColumns && qa.portraitLoaded && qa.portraitBeforeName && qa.nameLinesFit && qa.emailLink && qa.focusVisible;
+    const browserPass = qa.noHorizontalOverflow && qa.mainCount === 1 && qa.h1Count === 1 && qa.aboutHeading && qa.workHeading && qa.cardCount === 5 && qa.cardColumns === expectedColumns && qa.portraitLoaded && qa.portraitBeforeName && qa.nameLinesFit && qa.emailLink && qa.focusVisible;
     const pass = requiredFiles.every((font) => font?.status === 200) && !fontRequests.some((r) => isGoogleFontUrl(r.url)) && external.length === 0 && value.fontsReady && value.weights.every((w) => w.loaded) && /Inter/i.test(value.bodyFamily) && /Space Grotesk/i.test(value.displayFamily) && /Caveat/i.test(value.handwrittenFamily) && value.synthesis === "none" && shift === 0 && stable && zeroLayoutShift && noLateSwap && unexpectedFailures.length === 0 && browserPass;
     // Delayed cold-load evidence above proves no late swap. Capture the design
     // separately after an unthrottled reload, so screenshots show vendored fonts.
@@ -176,12 +176,17 @@ async function collect(profile, viewport, base, chrome) {
     const warm = await cdp.send("Runtime.evaluate", { returnByValue: true, expression: `(() => {
       const links=[...document.querySelectorAll('a')].map(el=>({text:el.textContent.trim(),href:el.getAttribute('href'),target:el.getAttribute('target'),rel:el.getAttribute('rel'),height:el.getBoundingClientRect().height}));
       const name=[...document.querySelector('h1').querySelectorAll('span')].map(el=>{const range=document.createRange();range.selectNodeContents(el);return {text:el.textContent,lines:range.getClientRects().length,fits:range.getBoundingClientRect().right<=el.getBoundingClientRect().right};});
+      const workPills=[...document.querySelectorAll('article')].map(card=>{
+        const pill=card.lastElementChild, box=pill.getBoundingClientRect(), cardBox=card.getBoundingClientRect();
+        const range=document.createRange();range.selectNodeContents(pill);const textBox=range.getBoundingClientRect();
+        return {role:pill.textContent,tag:pill.tagName,radius:getComputedStyle(pill).borderRadius,inside:box.left>=cardBox.left && box.right<=cardBox.right && box.bottom<=cardBox.bottom,textFits:textBox.left>=box.left && textBox.right<=box.right && textBox.bottom<=box.bottom,belowDescription:box.top>=card.children[2].getBoundingClientRect().bottom-1};
+      });
       const footer=document.querySelector('footer');
       const portrait=document.querySelector('.about img');
       const circle=portrait.parentElement.getBoundingClientRect();
       const image=portrait.getBoundingClientRect();
       const portraitCrop={widthRatio:image.width/circle.width,leftRatio:(image.left-circle.left)/circle.width,topRatio:(image.top-circle.top)/circle.height,maxWidth:getComputedStyle(portrait).maxWidth,circleOverflow:getComputedStyle(portrait.parentElement).overflow};
-      return {links,name,portraitCrop,footer:footer.textContent.trim(),footerCount:document.querySelectorAll('footer').length,scrollSnap:getComputedStyle(document.documentElement).scrollSnapType,overflow:document.documentElement.scrollWidth>innerWidth,excludedCopy:/Built with care|Available for select work/.test(document.body.innerText),portraitSize:circle.width};
+      return {links,name,workPills,portraitCrop,footer:footer.textContent.trim(),footerCount:document.querySelectorAll('footer').length,scrollSnap:getComputedStyle(document.documentElement).scrollSnapType,overflow:document.documentElement.scrollWidth>innerWidth,excludedCopy:/Built with care|Available for select work/.test(document.body.innerText),portraitSize:circle.width};
     })()` });
     await cdp.send("Emulation.setEmulatedMedia", { features: [{name:"prefers-reduced-motion",value:"reduce"}] });
     const reduced = await cdp.send("Runtime.evaluate", { returnByValue: true, expression: "getComputedStyle(document.documentElement).scrollBehavior" });
@@ -190,7 +195,7 @@ async function collect(profile, viewport, base, chrome) {
 
     const crop = warmQA.portraitCrop;
     const portraitPass = Math.abs(crop.widthRatio-1.37)<0.002 && Math.abs(crop.leftRatio+0.44)<0.002 && Math.abs(crop.topRatio-0.02)<0.002 && crop.maxWidth==='none' && crop.circleOverflow==='hidden';
-    const warmPass = !warmQA.overflow && !warmQA.excludedCopy && warmQA.footerCount===1 && (warmQA.footer.startsWith("Preview build") || /^Version v\d+\.\d+\.\d+$/.test(warmQA.footer)) && warmQA.scrollSnap==="none" && warmQA.reducedMotionScroll==="auto" && warmQA.name.length===2 && warmQA.name.every(line=>line.lines===1&&line.fits) && warmQA.links.filter(link=>['Email','LinkedIn','GitHub'].includes(link.text)).every(link=>link.height>=44) && warmQA.links.some(link=>link.href==='https://kauneushoitolahanna.fi') && warmQA.links.every(link=>!link.href.startsWith('http') || link.target==='_blank' && link.rel==='noopener noreferrer');
+    const warmPass = warmQA.workPills.length===5 && warmQA.workPills.every(pill=>pill.tag==='SPAN' && pill.radius==='999px' && pill.inside && pill.textFits && pill.belowDescription) && !warmQA.overflow && !warmQA.excludedCopy && warmQA.footerCount===1 && (warmQA.footer.startsWith("Preview build") || /^Version v\d+\.\d+\.\d+$/.test(warmQA.footer)) && warmQA.scrollSnap==="none" && warmQA.reducedMotionScroll==="auto" && warmQA.name.length===2 && warmQA.name.every(line=>line.lines===1&&line.fits) && warmQA.links.filter(link=>['Email','LinkedIn','GitHub'].includes(link.text)).every(link=>link.height>=44) && warmQA.links.some(link=>link.href==='https://kauneushoitolahanna.fi') && warmQA.links.every(link=>!link.href.startsWith('http') || link.target==='_blank' && link.rel==='noopener noreferrer');
     const screenshot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width: viewport.width, height: Math.ceil(captureReady.result.value.height), scale: 1 } });
     mkdirSync(EVIDENCE_DIR, { recursive: true });
     const screenshotPath = join(EVIDENCE_DIR, `viewport-${viewport.width}.png`);
