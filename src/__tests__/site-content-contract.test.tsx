@@ -40,7 +40,7 @@ describe("approved one-page profile content", () => {
       expect(cards[index]).toHaveTextContent(item.client);
       expect(within(cards[index]).getByRole("heading", { level: 3 })).toHaveTextContent(item.title);
       expect(cards[index]).toHaveTextContent(item.description);
-      expect(cards[index].lastElementChild).toHaveTextContent(item.role);
+      expect([...cards[index].lastElementChild!.children].map(pill => pill.textContent)).toEqual(item.roles);
     });
     expect(document.body.textContent).toContain('#1 ranking for “Kosmetologi Järvenpää”');
     expect(document.body.textContent).not.toMatch(/Built with care|Available for select work/);

@@ -176,11 +176,11 @@ async function collect(profile, viewport, base, chrome) {
     const warm = await cdp.send("Runtime.evaluate", { returnByValue: true, expression: `(() => {
       const links=[...document.querySelectorAll('a')].map(el=>({text:el.textContent.trim(),href:el.getAttribute('href'),target:el.getAttribute('target'),rel:el.getAttribute('rel'),height:el.getBoundingClientRect().height}));
       const name=[...document.querySelector('h1').querySelectorAll('span')].map(el=>{const range=document.createRange();range.selectNodeContents(el);return {text:el.textContent,lines:range.getClientRects().length,fits:range.getBoundingClientRect().right<=el.getBoundingClientRect().right};});
-      const workPills=[...document.querySelectorAll('article')].map(card=>{
-        const pill=card.lastElementChild, box=pill.getBoundingClientRect(), cardBox=card.getBoundingClientRect();
+      const workPills=[...document.querySelectorAll('article')].flatMap(card=>[...card.lastElementChild.children].map(pill=>{
+        const box=pill.getBoundingClientRect(), cardBox=card.getBoundingClientRect();
         const range=document.createRange();range.selectNodeContents(pill);const textBox=range.getBoundingClientRect();
         return {role:pill.textContent,tag:pill.tagName,radius:getComputedStyle(pill).borderRadius,inside:box.left>=cardBox.left && box.right<=cardBox.right && box.bottom<=cardBox.bottom,textFits:textBox.left>=box.left && textBox.right<=box.right && textBox.bottom<=box.bottom,belowDescription:box.top>=card.children[2].getBoundingClientRect().bottom-1};
-      });
+      }));
       const footer=document.querySelector('footer');
       const portrait=document.querySelector('.about img');
       const circle=portrait.parentElement.getBoundingClientRect();
@@ -195,7 +195,7 @@ async function collect(profile, viewport, base, chrome) {
 
     const crop = warmQA.portraitCrop;
     const portraitPass = Math.abs(crop.widthRatio-1.37)<0.002 && Math.abs(crop.leftRatio+0.44)<0.002 && Math.abs(crop.topRatio-0.02)<0.002 && crop.maxWidth==='none' && crop.circleOverflow==='hidden';
-    const warmPass = warmQA.workPills.length===5 && warmQA.workPills.every(pill=>pill.tag==='SPAN' && pill.radius==='999px' && pill.inside && pill.textFits && pill.belowDescription) && !warmQA.overflow && !warmQA.excludedCopy && warmQA.footerCount===1 && (warmQA.footer.startsWith("Preview build") || /^Version v\d+\.\d+\.\d+$/.test(warmQA.footer)) && warmQA.scrollSnap==="none" && warmQA.reducedMotionScroll==="auto" && warmQA.name.length===2 && warmQA.name.every(line=>line.lines===1&&line.fits) && warmQA.links.filter(link=>['Email','LinkedIn','GitHub'].includes(link.text)).every(link=>link.height>=44) && warmQA.links.some(link=>link.href==='https://kauneushoitolahanna.fi') && warmQA.links.every(link=>!link.href.startsWith('http') || link.target==='_blank' && link.rel==='noopener noreferrer');
+    const warmPass = warmQA.workPills.length===6 && warmQA.workPills.every(pill=>pill.tag==='SPAN' && pill.radius==='999px' && pill.inside && pill.textFits && pill.belowDescription) && !warmQA.overflow && !warmQA.excludedCopy && warmQA.footerCount===1 && (warmQA.footer.startsWith("Preview build") || /^Version v\d+\.\d+\.\d+$/.test(warmQA.footer)) && warmQA.scrollSnap==="none" && warmQA.reducedMotionScroll==="auto" && warmQA.name.length===2 && warmQA.name.every(line=>line.lines===1&&line.fits) && warmQA.links.filter(link=>['Email','LinkedIn','GitHub'].includes(link.text)).every(link=>link.height>=44) && warmQA.links.some(link=>link.href==='https://kauneushoitolahanna.fi') && warmQA.links.every(link=>!link.href.startsWith('http') || link.target==='_blank' && link.rel==='noopener noreferrer');
     const screenshot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width: viewport.width, height: Math.ceil(captureReady.result.value.height), scale: 1 } });
     mkdirSync(EVIDENCE_DIR, { recursive: true });
     const screenshotPath = join(EVIDENCE_DIR, `viewport-${viewport.width}.png`);

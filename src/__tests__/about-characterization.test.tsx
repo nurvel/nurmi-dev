@@ -22,22 +22,25 @@ describe("approved one-page About page semantics", () => {
     expect(screen.getAllByRole("article")).toHaveLength(5);
     const card = screen.getByRole("heading", { level: 3, name: "Logistics visibility platform" }).closest("article")!;
     expect(within(card).getByText("VR LOGISTICS - VIA NITOR")).toBeInTheDocument();
-    expect(within(card).getByText("Real-time map-based shipment tracking, schedules, and reporting, available 24/7, including on mobile. Accessible transport data helps streamline, refine, and automate logistics operations.")).toBeInTheDocument();
-    expect(card.lastElementChild).toBe(within(card).getByText("Full-Stack Developer"));
+    expect(within(card).getByText("Real-time map-based shipment tracking, schedules, and reporting, available 24/7 on mobile, help streamline and automate logistics operations.")).toBeInTheDocument();
+    expect(card.lastElementChild!.firstElementChild).toBe(within(card).getByText("Full-Stack Developer"));
     expect(within(card).queryByRole("link")).not.toBeInTheDocument();
   });
-  it("ends each existing work card with its requested role pill", () => {
-    const expected = [
-      ["Contract monitoring system", "Tecnical Product Owner"],
-      ["Configuration UI", "Full-Stack Developer"],
-      ["SaaS marketplace", "Head of R&D"],
-      ["Website & SEO", "Performance Marketer & Full-Stack Developer"],
+  it("ends each work card with one separate pill per role", () => {
+    const expected: Array<[string, string[]]> = [
+      ["Logistics visibility platform", ["Full-Stack Developer"]],
+      ["Contract monitoring system", ["Technical Product Owner"]],
+      ["Configuration UI", ["Full-Stack Developer"]],
+      ["SaaS marketplace", ["Head of R&D"]],
+      ["Website & SEO", ["Performance Marketer", "Full-Stack Developer"]],
     ];
-    for (const [title, role] of expected) {
+    for (const [title, roles] of expected) {
       const card = screen.getByRole("heading", { level: 3, name: title }).closest("article")!;
-      const pill = within(card).getByText(role);
-      expect(pill.tagName).toBe("SPAN");
-      expect(card.lastElementChild).toBe(pill);
+      const pills = [...card.lastElementChild!.children];
+      expect(pills.map(pill => pill.textContent)).toEqual(roles);
+      expect(pills.every(pill => pill.tagName === "SPAN")).toBe(true);
     }
+    const khh = screen.getByRole("heading", { name: "Website & SEO" }).closest("article")!;
+    expect(within(khh).queryByText("Performance Marketer & Full-Stack Developer")).not.toBeInTheDocument();
   });
 });

@@ -10,7 +10,7 @@ export interface WorkItem {
   client: string;
   title: string;
   description: string;
-  role: string;
+  roles: string[];
   href?: string;
 }
 export type AboutParagraph = Array<{ text: string; href?: string; emphasis?: boolean }>;
@@ -38,11 +38,11 @@ export const aboutSiteContent: AboutSiteContent = {
   roles: ["Technical Product Owner", "Full-Stack Developer", "Head of R&D", "Performance Marketer"],
   recentWorkTitle: "Recent work",
   recentWork: [
-    { client: "VR LOGISTICS - VIA NITOR", title: "Logistics visibility platform", description: "Real-time map-based shipment tracking, schedules, and reporting, available 24/7, including on mobile. Accessible transport data helps streamline, refine, and automate logistics operations.", role: "Full-Stack Developer" },
-    { client: "HSL · via Twoday", title: "Contract monitoring system", description: "Expanding into multi-modal transport visibility and proactive contract KPIs and compensations to operators.", role: "Tecnical Product Owner" },
-    { client: "Aidon · via Twoday", title: "Configuration UI", description: "Schema-driven forms with a durable persistence model for utilities.", role: "Full-Stack Developer" },
-    { client: "SaaShop", title: "SaaS marketplace", description: "Grew ARR to EUR 1.4M while improving reliability, reducing customer support feedback, and expanding the SMB customer base.", role: "Head of R&D" },
-    { client: "Kauneushoitola Hanna", title: "Website & SEO", description: "Created and optimised a site for a local beauty salon. Achieved #1 ranking for “Kosmetologi Järvenpää”.", href: "https://kauneushoitolahanna.fi", role: "Performance Marketer & Full-Stack Developer" }
+    { client: "VR LOGISTICS - VIA NITOR", title: "Logistics visibility platform", description: "Real-time map-based shipment tracking, schedules, and reporting, available 24/7 on mobile, help streamline and automate logistics operations.", roles: ["Full-Stack Developer"] },
+    { client: "HSL · via Twoday", title: "Contract monitoring system", description: "Expanding into multi-modal transport visibility and proactive contract KPIs and compensations to operators.", roles: ["Technical Product Owner"] },
+    { client: "Aidon · via Twoday", title: "Configuration UI", description: "Schema-driven forms with a durable persistence model for utilities.", roles: ["Full-Stack Developer"] },
+    { client: "SaaShop", title: "SaaS marketplace", description: "Grew ARR to EUR 1.4M while improving reliability, reducing customer support feedback, and expanding the SMB customer base.", roles: ["Head of R&D"] },
+    { client: "Kauneushoitola Hanna", title: "Website & SEO", description: "Created and optimised a site for a local beauty salon. Achieved #1 ranking for “Kosmetologi Järvenpää”.", href: "https://kauneushoitolahanna.fi", roles: ["Performance Marketer", "Full-Stack Developer"] }
   ],
   contactPrompt: "Got a product or platform that needs a steady hand?",
   contacts: [
