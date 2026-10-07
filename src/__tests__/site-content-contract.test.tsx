@@ -1,129 +1,53 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { ThemeProvider } from "styled-components";
 import theme from "../common/theme";
+import About from "../pages/About";
+import { aboutSiteContent } from "../data/siteContent";
 
-/**
- * Typed / data-driven contract test for siteContent module.
- * Verifies that aboutSiteContent exports the expected typed shape
- * and that the About page renders correctly when driven by it.
- */
-describe("siteContent typed contract", () => {
-  let siteContent: any;
-
-  beforeEach(async () => {
-    // Dynamic import so this test fails if the module doesn't exist yet
-    siteContent = await import("../data/siteContent");
+describe("approved one-page profile content", () => {
+  beforeEach(() => render(<ThemeProvider theme={theme}><About /></ThemeProvider>));
+  it("renders the new hero and about structure from typed content", () => {
+    expect(screen.getByRole("heading", { level: 1, name: "Veli-Pekka Nurmi" })).toBeInTheDocument();
+    expect(screen.getByText("Product Engineer")).toBeInTheDocument();
+    expect(screen.getByText(aboutSiteContent.profile.subtitle)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "About" })).toBeInTheDocument();
   });
-
-  describe("aboutSiteContent shape", () => {
-    it("exports aboutSiteContent with profile, roles, focus, recentWork, contacts", () => {
-      expect(siteContent.aboutSiteContent).toBeDefined();
-      const { aboutSiteContent } = siteContent;
-
-      // Profile fields
-      expect(aboutSiteContent.profile.name).toBe("Veli-Pekka Nurmi");
-      expect(aboutSiteContent.profile.subtitle).toBe(
-        "I work with software systems from problem framing to production."
-      );
-      expect(aboutSiteContent.profile.avatarAlt).toBe("Veli-Pekka Nurmi");
-
-      // Roles — exactly four
-      expect(aboutSiteContent.roles).toEqual([
-        "Technical Product Owner",
-        "Full-Stack Developer",
-        "Head of R&D",
-        "Performance Marketer",
-      ]);
-
-      // Focus
-      expect(aboutSiteContent.focus.title).toBe("Current focus");
-      expect(aboutSiteContent.focus.highlights).toEqual([
-        "agentic coding",
-        "spec-driven development",
-      ]);
-      expect(aboutSiteContent.focus.linkLabel).toBe("Nitor");
-      expect(aboutSiteContent.focus.linkHref).toBe("https://nitor.com/en");
-
-      // Recent work — exactly four items with correct highlights
-      expect(aboutSiteContent.recentWork.length).toBe(4);
-      expect(aboutSiteContent.recentWork[0].highlight).toBe(
-        "Contract monitoring system"
-      );
-      expect(aboutSiteContent.recentWork[1].highlight).toBe(
-        "Configuration UI"
-      );
-      expect(aboutSiteContent.recentWork[2].highlight).toBe(
-        "SaaS marketplace"
-      );
-      expect(aboutSiteContent.recentWork[3].highlight).toBe("Website & SEO");
-
-      // Contacts — exactly three
-      expect(aboutSiteContent.contacts.length).toBe(3);
-      expect(aboutSiteContent.contacts[0]).toEqual({
-        label: "LinkedIn",
-        href: "https://www.linkedin.com/in/veli-pekkanurmi",
-      });
-      expect(aboutSiteContent.contacts[1]).toEqual({
-        label: "Github",
-        href: "https://github.com/nurvel",
-      });
-      expect(aboutSiteContent.contacts[2]).toEqual({
-        label: "Email",
-        href: "mailto:nurmi.vp@gmail.com",
-      });
-    });
+  it("renders five titled work cards and preserves the client destination", () => {
+    const section = screen.getByRole("heading", { level: 2, name: "Recent work" }).closest("section");
+    expect(section).toBeTruthy();
+    expect(within(section as HTMLElement).getAllByRole("heading", { level: 3 })).toHaveLength(5);
+    expect(screen.getByRole("link", { name: /Created and optimised/ })).toHaveAttribute("href", "https://kauneushoitolahanna.fi");
   });
-
-  describe("About page driven by siteContent", () => {
-    beforeEach(async () => {
-      // Import About after the module is loaded — it should consume siteContent
-      const { default: About } = await import("../pages/About");
-      render(
-        <ThemeProvider theme={theme}>
-          <About />
-        </ThemeProvider>
-      );
+  it("exposes contact links with accessible labels and safe external targets", () => {
+    const nav = screen.getByRole("navigation", { name: "Contact links" });
+    expect(within(nav).getByRole("link", { name: "Email" })).toHaveAttribute("href", "mailto:nurmi.vp@gmail.com");
+    for (const label of ["LinkedIn", "GitHub"]) expect(within(nav).getByRole("link", { name: label })).toHaveAttribute("rel", "noopener noreferrer");
+    expect(within(nav).queryByText(/@/)).not.toBeInTheDocument();
+  });
+  it("retains exact source-backed prose, emphasis and client/card pairing", () => {
+    const about = screen.getByRole("region", { name: "About" });
+    const paragraphs = about.querySelectorAll("p");
+    expect(paragraphs).toHaveLength(aboutSiteContent.about.length);
+    aboutSiteContent.about.forEach((parts, index) => {
+      expect(paragraphs[index].textContent).toBe(parts.map(part => part.text).join(""));
     });
-
-    it("renders profile name from siteContent", () => {
-      expect(screen.getByText("Veli-Pekka Nurmi")).toBeInTheDocument();
+    for (const phrase of ["agentic coding", "spec-driven development"]) {
+      expect(screen.getByText(phrase).tagName).toBe("STRONG");
+    }
+    const cards = screen.getAllByRole("article");
+    expect(cards).toHaveLength(5);
+    aboutSiteContent.recentWork.forEach((item, index) => {
+      expect(cards[index]).toHaveTextContent(item.client);
+      expect(within(cards[index]).getByRole("heading", { level: 3 })).toHaveTextContent(item.title);
+      expect(cards[index]).toHaveTextContent(item.description);
+      expect([...cards[index].lastElementChild!.children].map(pill => pill.textContent)).toEqual(item.roles);
     });
-
-    it("renders subtitle from siteContent", () => {
-      expect(
-        screen.getByText(
-          "I work with software systems from problem framing to production."
-        )
-      ).toBeInTheDocument();
-    });
-
-    it("renders all four role pills from siteContent data", () => {
-      for (const role of siteContent.aboutSiteContent.roles) {
-        expect(screen.getByText(role)).toBeInTheDocument();
-      }
-    });
-
-    it("renders focus highlights from siteContent", () => {
-      expect(screen.getByText(/agentic coding/)).toBeInTheDocument();
-      expect(
-        screen.getByText(/spec-driven development/)
-      ).toBeInTheDocument();
-    });
-
-    it("renders all recent work highlights from siteContent", () => {
-      for (const item of siteContent.aboutSiteContent.recentWork) {
-        const paras = document.querySelectorAll("p");
-        const found = Array.from(paras).find((p: Element) =>
-          p.textContent?.includes(item.highlight)
-        );
-        expect(found).toBeTruthy();
-      }
-    });
-
-    it("renders all contact links from siteContent", () => {
-      for (const c of siteContent.aboutSiteContent.contacts) {
-        expect(screen.getByText(c.label)).toBeInTheDocument();
-      }
-    });
+    expect(document.body.textContent).toContain('#1 ranking for “Kosmetologi Järvenpää”');
+    expect(document.body.textContent).not.toMatch(/Built with care|Available for select work/);
+  });
+  it("uses one page heading and semantic section headings", () => {
+    expect(document.querySelectorAll("h1")).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Contact" })).toBeInTheDocument();
+    expect(screen.getByAltText("Veli-Pekka Nurmi portrait")).toHaveAttribute("src", "/portrait-cutout.png");
   });
 });

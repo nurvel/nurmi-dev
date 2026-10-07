@@ -52,36 +52,10 @@ jobs:
 
       - name: Determine build identity
         id: identity
-        shell: bash
+        env:
+          DEPLOY_REQUIRED: ${{ steps.publication.outputs.deploy_required }}
         run: |
-          git fetch --tags --force
-          release_tag=""
-
-          if [[ "$GITHUB_REF" == "refs/heads/main" && ("$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "workflow_dispatch") ]]; then
-            existing_tag="$(git tag --points-at "$GITHUB_SHA" --list 'v*.*.*' --sort=version:refname | tail -n 1)"
-            if [[ -n "$existing_tag" ]]; then
-              release_tag="$existing_tag"
-            else
-              latest_tag="$(git tag --list 'v*.*.*' --sort=-version:refname | head -n 1)"
-              if [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-                major="${BASH_REMATCH[1]}"
-                minor="${BASH_REMATCH[2]}"
-                patch="${BASH_REMATCH[3]}"
-              else
-                major=0
-                minor=0
-                patch=0
-              fi
-              release_tag="v${major}.${minor}.$((patch + 1))"
-            fi
-            build_identity="$release_tag"
-          else
-            build_identity="preview-${GITHUB_SHA:0:7}"
-          fi
-
-          echo "build_identity=$build_identity" >> "$GITHUB_OUTPUT"
-          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-          echo "Build identity: $build_identity"
+          node scripts/build-identity.mjs
 
       - name: Run tests
         run: npm test

@@ -1,107 +1,25 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { ThemeProvider } from "styled-components";
 import theme from "../common/theme";
 import About from "../pages/About";
 
-/**
- * Accessibility and security tests for the About page (task C).
- * - Current focus section is a <section> with an accessible heading
- * - Recent work section is a <section> with an accessible heading
- * - Contact links are wrapped in a <nav aria-label="..."> landmark
- * - All HTTP(S) target="_blank" links have rel="noopener noreferrer"
- * - Mailto links remain plain (no target/rel override)
- */
-
 describe("About page accessibility and link security", () => {
-  beforeEach(() => {
-    render(
-      <ThemeProvider theme={theme}>
-        <About />
-      </ThemeProvider>
-    );
+  beforeEach(() => render(<ThemeProvider theme={theme}><About /></ThemeProvider>));
+  it("uses one h1, named About/work sections and a contact landmark", () => {
+    expect(document.querySelectorAll("h1")).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "About" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Recent work" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Contact" })).toBeInTheDocument();
   });
-
-  describe("Semantic sections", () => {
-    it('renders "Current focus" inside a <section> element', () => {
-      const heading = screen.getByText("Current focus");
-      expect(heading).toBeInTheDocument();
-      expect(heading.closest("section")).toBeTruthy();
-    });
-
-    it('renders "Recent work" inside a <section> element', () => {
-      const heading = screen.getByText("Recent work");
-      expect(heading).toBeInTheDocument();
-      expect(heading.closest("section")).toBeTruthy();
-    });
-
-    it("has at least two <section> elements in the About page", () => {
-      const sections = document.querySelectorAll("section");
-      expect(sections.length).toBeGreaterThanOrEqual(2);
-    });
-  });
-
-  describe("Contact navigation landmark", () => {
-    it('renders contact links inside a <nav aria-label="..."> element', () => {
-      const nav = document.querySelector(
-        'nav[aria-label]',
-      ) as HTMLDivElement | null;
-
-      expect(nav).toBeTruthy();
-    });
-
-    it("contact nav has an aria-label for screen readers", () => {
-      const navEl = document.querySelector('nav[aria-label]');
-      expect(navEl?.getAttribute("aria-label")).toBeTruthy();
-      expect(
-        (navEl?.getAttribute("aria-label") ?? "").length,
-      ).toBeGreaterThan(0);
-    });
-  });
-
-  describe("Secure links — rel on target=_blank", () => {
-    it('gives Nitor link rel="noopener noreferrer"', () => {
-      const nitorLink = screen.getByRole("link", { name: /Nitor/ });
-      expect(nitorLink).toHaveAttribute("target", "_blank");
-      expect(nitorLink).toHaveAttribute(
-        "rel",
-        "noopener noreferrer",
-      );
-    });
-
-    it('gives Kauneushoitola Hanna link rel="noopener noreferrer"', () => {
-      const websiteLink = screen.getByRole("link", {
-        name: /Kauneushoitola Hanna/,
-      });
-      expect(websiteLink).toHaveAttribute("target", "_blank");
-      expect(websiteLink).toHaveAttribute(
-        "rel",
-        "noopener noreferrer",
-      );
-    });
-
-    it('gives LinkedIn contact link rel="noopener noreferrer"', () => {
-      const linkedin = screen.getByRole("link", { name: "LinkedIn" });
-      expect(linkedin).toHaveAttribute("target", "_blank");
-      expect(linkedin).toHaveAttribute(
-        "rel",
-        "noopener noreferrer",
-      );
-    });
-
-    it('gives Github contact link rel="noopener noreferrer"', () => {
-      const github = screen.getByRole("link", { name: "Github" });
-      expect(github).toHaveAttribute("target", "_blank");
-      expect(github).toHaveAttribute(
-        "rel",
-        "noopener noreferrer",
-      );
-    });
-
-    it('does NOT set target/rel on mailto links', () => {
-      const email = screen.getByRole("link", { name: "Email" });
-      expect(email).toHaveAttribute("href", "mailto:nurmi.vp@gmail.com");
-      expect(email.getAttribute("target")).toBeNull();
-      expect(email.getAttribute("rel")).toBeNull();
-    });
+  it("retains secure external links and the original mailto destination", () => {
+    for (const href of ["https://nitor.com/en", "https://kauneushoitolahanna.fi", "https://www.linkedin.com/in/veli-pekkanurmi", "https://github.com/nurvel"]) {
+      const link = document.querySelector(`a[href="${href}"]`);
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    const email = within(screen.getByRole("navigation", { name: "Contact links" })).getByRole("link", { name: "Email" });
+    expect(email).toHaveAttribute("href", "mailto:nurmi.vp@gmail.com");
+    expect(email).not.toHaveAttribute("target");
+    expect(email).not.toHaveAttribute("rel");
   });
 });

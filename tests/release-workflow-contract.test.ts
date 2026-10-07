@@ -25,6 +25,8 @@ describe("production release workflow contract", () => {
 
   it("builds production assets with the candidate stable tag before deployment", () => {
     expect(workflow).toContain("VITE_RELEASE_VERSION");
+    expect(workflow).toContain("node scripts/build-identity.mjs");
+    expect(workflow).toContain("DEPLOY_REQUIRED: ${{ steps.publication.outputs.deploy_required }}");
     expect(workflow).toContain("needs: validate");
     expect(workflow).toContain("wrangler deploy");
     expect(workflow.indexOf("npm run build")).toBeLessThan(
@@ -58,9 +60,16 @@ describe("production release workflow contract", () => {
   });
 
   it("guards existing tags and releases for retries", () => {
-    expect(workflow).toContain("git tag --points-at \"$GITHUB_SHA\"");
+    expect(workflow).toContain("git rev-list -n 1 \"$release_tag\"");
+    expect(workflow).toContain("Tag $release_tag already points to $tag_commit, not $GITHUB_SHA");
     expect(workflow).toContain("gh release view \"$release_tag\"");
     expect(workflow).toContain("gh release create \"$release_tag\"");
+  });
+
+  it("keeps main bookkeeping validation-only and skips release publication", () => {
+    expect(workflow).toContain("needs.validate.outputs.deploy_required == 'true'");
+    expect(workflow).toContain("if: needs.deploy-production.result == 'success'");
+    expect(workflow).toContain("outputs:\n      build_identity: ${{ steps.identity.outputs.build_identity }}\n      release_tag: ${{ steps.identity.outputs.release_tag }}");
   });
 
   it("has one release workflow owner", () => {
