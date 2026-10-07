@@ -99,7 +99,7 @@ async function runVerifier(envExtra: Record<string, string> = {}) {
 
 /* ---------- Test spawning the verifier as a subprocess ---------- */
 
-describe.sequential("preview verifier lifecycle", () => {
+describe("preview verifier lifecycle", { concurrent: false }, () => {
   let fixture: net.Server | null = null;
 
   /* --- T1: Normal success — port clear after exit, no process leak --- */
@@ -347,7 +347,7 @@ describe.sequential("preview verifier lifecycle", () => {
 
 /* ---------- Test resolveDistAssetPath (pure) ---------- */
 
-describe.sequential("resolveDistAssetPath — safe asset path validation", () => {
+describe("resolveDistAssetPath — safe asset path validation", { concurrent: false }, () => {
   // Import the pure helper — this must not trigger main()
   let resolveDistAssetPath: typeof import("../scripts/verify-preview.mjs").resolveDistAssetPath;
 
