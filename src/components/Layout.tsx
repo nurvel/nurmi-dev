@@ -1,39 +1,12 @@
 import React, { ReactNode } from "react";
 import styled from "styled-components";
 import GlobalStyle from "../common/globalStyles";
-import { useScrollSnap } from "../hooks/useScrollSnap";
-import { SectionScrollProvider } from "../context/SectionScrollContext";
 import Footer from "./Footer";
 import { buildIdentity } from "../releaseIdentity";
 
-const AppContainer = styled.div`
-  min-height: 100vh;
-`;
-
-const SectionStack = styled.main`
-  display: flex;
-  flex-direction: column;
-`;
-
-const SNAP_RATIO = 0.1;
-const SCROLL_IDLE_DELAY_MS = 120;
-type LayoutProps = {
-  children: ReactNode;
-};
-
+const AppContainer = styled.div`min-height:100vh;`;
+const Content = styled.main``;
+type LayoutProps = { children: ReactNode };
 export default function Layout({ children }: LayoutProps) {
-  const activeSection = useScrollSnap({
-    thresholdRatio: SNAP_RATIO,
-    idleDelay: SCROLL_IDLE_DELAY_MS,
-  });
-
-  return (
-    <SectionScrollProvider value={{ activeSection }}>
-      <AppContainer>
-        <GlobalStyle />
-        <SectionStack>{children}</SectionStack>
-        <Footer identity={buildIdentity} />
-      </AppContainer>
-    </SectionScrollProvider>
-  );
+  return <AppContainer><GlobalStyle/><Content>{children}</Content><Footer identity={buildIdentity}/></AppContainer>;
 }

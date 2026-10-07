@@ -1,90 +1,39 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-
-/** Project root — resolves correctly under vitest. */
-const ROOT = process.cwd();
-
-/** Read a file relative to the project root. */
-function read(name: string) {
-  return fs.readFileSync(path.join(ROOT, name), "utf-8");
-}
-
-describe("font-delivery contract", () => {
-  const globalStylesPath = "src/common/globalStyles.tsx";
-  const stylesCssPath = "src/styles.css";
-  const buttonPath = "src/components/Button.tsx";
-  const indexPath = "index.html";
-
-  const requiredWeights = [300, 400, 500, 600, 700];
-  const fontUrl = "/fonts/roboto-condensed-latin-wght-normal.woff2";
-
-  it("GlobalStyle does not contain any @import of Google fonts", () => {
-    const content = read(globalStylesPath);
-    expect(content).not.toMatch(/@import.*fonts\.googleapis\.com/i);
-    expect(content).not.toMatch(/@import.*fonts\.gstatic\.com/i);
-  });
-
-  it("GlobalStyle enforces font-synthesis: none", () => {
-    const content = read(globalStylesPath);
-    expect(content).toMatch(/font-synthesis:\s*none/);
-  });
-
-  it("static Button component source coverage uses Roboto Condensed (not bare Roboto)", () => {
-    const content = read(buttonPath);
-    // This is static/component-source coverage only; the browser oracle samples rendered production elements.
-    expect(content).toMatch(/font-family:.*"Roboto\s+Condensed"/i);
-    // Reject a bare "Roboto" without "Condensed"
-    expect(content).not.toMatch(/font-family:\s*"Roboto"[^C]/i);
-  });
-
-  it("index.html preloads the self-hosted font", () => {
-    const content = read(indexPath);
-    expect(content).toMatch(/rel="preload"/);
-    expect(content).toMatch(/as="font"/);
-    expect(content).toMatch(
-      new RegExp('href="' + fontUrl.replace("/", "\\/") + '"'),
-    );
-  });
-
-  it("styles.css @font-face points at the correct self-hosted URL", () => {
-    const content = read(stylesCssPath);
-    expect(content).toContain(`url("${fontUrl}")`);
-  });
-
-  it("styles.css @font-face uses the deliberate anti-swap optional display", () => {
-    const content = read(stylesCssPath);
-    expect(content).toMatch(/font-display:\s*optional/);
-    expect(content).not.toMatch(/font-display:\s*swap/);
-  });
-
-  it("styles.css @font-face covers the full variable weight range 300-700", () => {
-    const content = read(stylesCssPath);
-    expect(content).toMatch(/font-weight:\s*300\s+700/);
-  });
-
-  it("styles.css @font-face declares normal/upright style (no italic)", () => {
-    const content = read(stylesCssPath);
-    expect(content).toMatch(/font-style:\s*normal/);
-  });
-
-  it("font evidence parses external font hosts instead of using URL substrings", () => {
-    const content = read("scripts/verify-font-delivery.mjs");
-    expect(content).toContain("new URL(value).hostname.toLowerCase()");
-    expect(content).toContain("GOOGLE_FONT_HOSTS");
-    expect(content).not.toContain('r.url.includes("fonts.googleapis.com")');
-    expect(content).not.toContain('r.url.includes("fonts.gstatic.com")');
-  });
-
-  it(`all repository weights ${requiredWeights.join(", ")} fall inside the variable range`, () => {
-    const content = read(stylesCssPath);
-    const m = content.match(/font-weight:\s*(\d+)\s+(\d+)/);
-    expect(m, "@font-face must declare a numeric weight range").toBeTruthy();
-
-    const min = parseInt(m![1], 10);
-    const max = parseInt(m![2], 10);
-    for (const w of requiredWeights) {
-      expect(w >= min && w <= max, `weight ${w} not in [${min}, ${max}]`).toBe(true);
-    }
-  });
+const ROOT=process.cwd();
+const read=(name:string)=>fs.readFileSync(path.join(ROOT,name),"utf-8");
+describe("first-party font delivery contract",()=>{
+ const globalStyles=read("src/common/globalStyles.tsx");
+ it("declares self-hosted Inter, Space Grotesk and Caveat with synthesis disabled",()=>{
+  for(const family of ["Inter","Space Grotesk","Caveat"]) expect(globalStyles).toContain(`font-family:${family==='Space Grotesk'?"'Space Grotesk'":family}`);
+  expect(globalStyles).toMatch(/font-synthesis:none/);
+  expect(globalStyles).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/);
+ });
+ it("preloads all three first-party faces with deliberate anti-swap display",()=>{
+  for (const font of ["inter-latin-wght-normal", "space-grotesk-latin-wght-normal", "caveat-latin-600-normal"]) {
+   expect(read("index.html")).toContain(`/fonts/${font}.woff2`);
+   expect(globalStyles).toContain(`/fonts/${font}.woff2`);
+  }
+  expect(globalStyles.match(/font-display:optional/g)).toHaveLength(3);
+  expect(globalStyles).not.toContain("font-display:swap");
+  expect(globalStyles).toContain("font-weight:100 900");
+  expect(globalStyles).toContain("font-weight:300 700");
+  expect(globalStyles).toContain("font-weight:600");
+ });
+ it("combines documented byte hashes with cold-load CDP and cleanup verification",()=>{
+  const script=read("scripts/verify-font-delivery.mjs");
+  expect(script).toContain("createHash");
+  expect(script).toContain("new URL(value).hostname.toLowerCase()");
+  expect(script).toContain("GOOGLE_FONT_HOSTS");
+  expect(script).toContain("Page.addScriptToEvaluateOnNewDocument");
+  expect(script).toContain("Network.setBlockedURLs");
+  expect(script).toContain("layout-shift");
+  expect(script).toContain("first-party-inter-space-grotesk-caveat-cold-load-v1");
+  expect(script).toContain("browserProfilesRemoved");
+  for(const family of ["Inter","Space Grotesk","Caveat"]) expect(script).toContain(family);
+ });
+ it("vendors three Latin font files and licenses",()=>{
+  for(const f of ["inter-latin-wght-normal.woff2","space-grotesk-latin-wght-normal.woff2","caveat-latin-600-normal.woff2","inter-OFL.txt","space-grotesk-OFL.txt","caveat-OFL.txt"]) expect(fs.existsSync(path.join(ROOT,"public/fonts",f))).toBe(true);
+ });
 });

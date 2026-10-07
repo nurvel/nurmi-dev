@@ -9,13 +9,17 @@ const FooterRegion = styled.footer`
   padding: 1rem;
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.textPrimary};
-  font-size: 0.95rem;
+  font: 400 0.75rem ${({ theme }) => theme.typography.displayFamily};
   line-height: 1.4;
   text-align: center;
 `;
 
 const ReleaseLink = styled.a`
   color: inherit;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 8px;
   text-decoration: underline;
   text-underline-offset: 0.2em;
 `;
