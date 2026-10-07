@@ -14,9 +14,9 @@ When the approved `AGENTS.md` is present, read it first. Then read `PRODUCT.md`,
 
 ## Backlog baseline
 
-Backlog.md 1.51.0 is configured in `backlog/config.yml` with local-only query behavior: remote operations are disabled, active-branch inspection is disabled for this empty baseline, automatic commits are disabled, and Git integration remains enabled. The task prefix is `NURMI` and the lifecycle statuses are `To Do`, `In Progress`, and `Done`.
+Backlog.md is configured in `backlog/config.yml` with local-only query behavior: remote operations and active-branch inspection are disabled, automatic commits are disabled, and Git integration remains enabled. The task prefix is `NURMI` and the lifecycle statuses are `To Do`, `In Progress`, and `Done`.
 
-The active task set is intentionally empty in this migration. This is a one-time current-population hold, not a permanent ban: a later Product/PO decision may populate the backlog with real, accepted work. Do not add filler tasks, a migration-done task, invented milestones, historical backfill, or task templates presented as work items. Use labels such as `horizon:now`, `horizon:next`, and `horizon:later` to separate planning horizons without adding a custom lifecycle status.
+The empty task set was an initial migration baseline, not a permanent population hold. The current accepted records and their lifecycle state live only in `backlog/`; read them with the native CLI rather than treating this document as a status ledger. Future tasks still require a separate Product/PO decision. Do not add filler tasks, a migration-done task, invented milestones, historical backfill, or task templates presented as work items. Use labels such as `horizon:now`, `horizon:next`, and `horizon:later` to separate planning horizons without adding a custom lifecycle status. A listed task does not itself allocate or start implementation.
 
 Useful local commands:
 

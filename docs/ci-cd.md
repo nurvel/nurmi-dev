@@ -55,9 +55,9 @@ shown as the production version; every other value (including local builds) is
 shown with an explicit `Preview build` marker. No version is hand-maintained in
 the application.
 
-`package.json` is the release-version source. The owner-approved target for
-the current redesign PR is `2.0.0`; it is not a production release until
-separately authorized and published. Stable versions use canonical `MAJOR.MINOR.PATCH`
+`package.json` is the release-version source. The `2.0.0` redesign was
+published through PR #100 and its stable release; it is historical, not a pending
+publication gate. Stable versions use canonical `MAJOR.MINOR.PATCH`
 components without leading zeroes or prerelease/build metadata. The workflow
 uses `v<package version>` as the production identity and validates it before
 building or deploying. A candidate must exceed the highest existing canonical
@@ -70,8 +70,8 @@ For ordinary changes, the agent normally chooses a patch bump for fixes,
 content, dependency, and maintenance changes; a minor bump for an approved new
 visible feature; and a major bump only with explicit owner approval. Ask the
 owner if classification is materially ambiguous. Choose one bump per pending
-production release/PR, not per commit or preview: further fixes to pending
-`2.0.0` retain that version. For future automated dependency PRs, a maintainer
+production release/PR, not per commit or preview: further fixes in the same
+pending release retain its selected version until publication. For future automated dependency PRs, a maintainer
 or agent must prepare a valid release version before production merge; CI never
 guesses a semantic category. Bookkeeping-only changes need no release bump and
 continue validation/testing without publishing or creating a release.

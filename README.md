@@ -48,10 +48,12 @@ boxes. Machine-readable evidence is written to ignored `target/font-delivery-evi
 The deployment workflow is documented in [`docs/ci-cd.md`](docs/ci-cd.md). In short:
 
 ```text
-any non-main branch → CI → Worker preview version
-Dependabot branch push → CI only (no preview; Cloudflare secrets are unavailable)
-merge to main → CI → Worker production deployment
-successful main deployment → next vX.Y.Z tag → GitHub Release
+pull request → CI validation only
+Dependabot branch push → excluded (no preview; no Cloudflare secrets)
+other branch push → CI → Worker preview when publication is required
+merge to main → CI → Worker production when publication is required
+successful production deployment → v<package.json version> tag → GitHub Release
+bookkeeping-only changes → validation without deployment, tag or release
 ```
 
 ### Hosting
@@ -69,4 +71,4 @@ script.
 
 ### Project planning
 
-Project intent and planning conventions live in [`PRODUCT.md`](PRODUCT.md) and [`docs/project-conventions.md`](docs/project-conventions.md). The source map is [`docs/project-management.yaml`](docs/project-management.yaml), and the local Backlog.md baseline is [`backlog/config.yml`](backlog/config.yml). The backlog is intentionally empty during this migration; future population is a separate Product/PO decision.
+Project intent and planning conventions live in [`PRODUCT.md`](PRODUCT.md) and [`docs/project-conventions.md`](docs/project-conventions.md). The source map is [`docs/project-management.yaml`](docs/project-management.yaml), and the local Backlog.md baseline is [`backlog/config.yml`](backlog/config.yml). Accepted tasks and their current lifecycle state live in `backlog/`. The empty backlog was the initial migration baseline; additional work still requires a separate Product/PO decision, and a listed task does not itself start implementation.
