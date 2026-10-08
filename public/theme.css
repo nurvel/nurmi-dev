@@ -34,3 +34,86 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
 }
+
+:root {
+  --nurmi-theme-motion-duration: 520ms;
+  --nurmi-theme-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes nurmi-theme-reveal {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes nurmi-coin-to-dark {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(540deg); }
+}
+
+@keyframes nurmi-coin-to-light {
+  from { transform: rotateY(180deg); }
+  to { transform: rotateY(720deg); }
+}
+
+html[data-theme-transition="active"]::view-transition-group(root),
+html[data-theme-transition="active"]::view-transition-group(nurmi-theme-toggle) {
+  animation: none;
+}
+
+html[data-theme-transition="active"]::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+html[data-theme-transition="active"]::view-transition-old(root),
+html[data-theme-transition="active"]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html[data-theme-transition="active"]::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+html[data-theme-transition="active"]::view-transition-new(root) {
+  z-index: 2;
+  animation: nurmi-theme-reveal var(--nurmi-theme-motion-duration)
+    var(--nurmi-theme-motion-easing) both;
+}
+
+html[data-theme-transition="active"]::view-transition-group(nurmi-theme-toggle) {
+  z-index: 3;
+}
+
+html[data-theme-transition="active"]::view-transition-old(nurmi-theme-toggle) {
+  display: none;
+}
+
+html[data-theme-transition="active"]::view-transition-new(nurmi-theme-toggle) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html::view-transition {
+  pointer-events: none;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .theme-coin {
+  animation: nurmi-coin-to-dark var(--nurmi-theme-motion-duration)
+    var(--nurmi-theme-motion-easing) both;
+}
+
+html[data-theme-transition="active"][data-theme="light"] .theme-coin {
+  animation: nurmi-coin-to-light var(--nurmi-theme-motion-duration)
+    var(--nurmi-theme-motion-easing) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::view-transition-group(*),
+  html::view-transition-old(*),
+  html::view-transition-new(*),
+  html[data-theme-transition="active"] .theme-coin {
+    animation: none !important;
+  }
+}
