@@ -7,19 +7,22 @@ import {
   THEME_STORAGE_KEY,
   type ThemePreference,
 } from "../common/themePreference";
+import { createThemeTransition } from "../common/themeTransition";
 
 export function useThemePreference() {
   const [theme, setTheme] = useState<ThemePreference>("dark");
   const [ready, setReady] = useState(false);
+  const [transition] = useState(createThemeTransition);
 
   const chooseTheme = useCallback((nextTheme: ThemePreference) => {
     setTheme(nextTheme);
-    applyTheme(nextTheme);
     persistTheme(nextTheme);
-  }, []);
+    transition.change(() => applyTheme(nextTheme));
+  }, [transition]);
 
   useEffect(() => {
     const applyResolvedTheme = () => {
+      transition.cancel();
       const nextTheme = getInitialTheme(readStoredTheme());
       setTheme(nextTheme);
       applyTheme(nextTheme);
@@ -32,8 +35,11 @@ export function useThemePreference() {
     };
     window.addEventListener("storage", onStorage);
 
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      transition.cancel();
+    };
+  }, [transition]);
 
   return { theme, setTheme: chooseTheme, ready };
 }

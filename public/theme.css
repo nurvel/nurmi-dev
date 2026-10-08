@@ -34,3 +34,130 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
 }
+
+:root {
+  --nurmi-theme-motion-duration: 520ms;
+  --nurmi-theme-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --nurmi-coin-motion-duration: 1100ms;
+  --nurmi-coin-motion-easing: cubic-bezier(0.4, 0.2, 0.6, 0.8);
+}
+
+@keyframes nurmi-theme-reveal {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes nurmi-coin-to-dark {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(540deg); }
+}
+
+@keyframes nurmi-coin-to-light {
+  from { transform: rotateY(180deg); }
+  to { transform: rotateY(720deg); }
+}
+
+/* Fade leaf faces: opacity on the rotating parent would flatten preserve-3d. */
+@keyframes nurmi-coin-fade {
+  from { opacity: 1; }
+  45%, 55% { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+/* Keep the live toggle capture until its longer coin animation completes. */
+@keyframes nurmi-toggle-hold {
+  from, to { opacity: 1; }
+}
+
+@keyframes nurmi-coin-face-out {
+  0% { visibility: visible; }
+  50%, 100% { visibility: hidden; }
+}
+
+@keyframes nurmi-coin-face-in {
+  0% { visibility: hidden; }
+  50%, 100% { visibility: visible; }
+}
+
+html[data-theme-transition="active"]::view-transition-group(root),
+html[data-theme-transition="active"]::view-transition-group(nurmi-theme-toggle) {
+  animation: none;
+}
+
+html[data-theme-transition="active"]::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+html[data-theme-transition="active"]::view-transition-old(root),
+html[data-theme-transition="active"]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html[data-theme-transition="active"]::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+html[data-theme-transition="active"]::view-transition-new(root) {
+  z-index: 2;
+  animation: nurmi-theme-reveal var(--nurmi-theme-motion-duration)
+    var(--nurmi-theme-motion-easing) both;
+}
+
+html[data-theme-transition="active"]::view-transition-group(nurmi-theme-toggle) {
+  z-index: 3;
+}
+
+html[data-theme-transition="active"]::view-transition-old(nurmi-theme-toggle) {
+  display: none;
+}
+
+html[data-theme-transition="active"]::view-transition-new(nurmi-theme-toggle) {
+  animation: nurmi-toggle-hold var(--nurmi-coin-motion-duration) linear both;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html::view-transition {
+  pointer-events: none;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .theme-coin {
+  animation: nurmi-coin-to-dark var(--nurmi-coin-motion-duration)
+    var(--nurmi-coin-motion-easing) both;
+}
+
+html[data-theme-transition="active"][data-theme="light"] .theme-coin {
+  animation: nurmi-coin-to-light var(--nurmi-coin-motion-duration)
+    var(--nurmi-coin-motion-easing) both;
+}
+
+/* Select the glyph by elapsed time, not by which side faces the camera. */
+html[data-theme-transition="active"] .theme-coin .sun,
+html[data-theme-transition="active"] .theme-coin .moon {
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .sun,
+html[data-theme-transition="active"][data-theme="light"] .moon {
+  animation: nurmi-coin-face-out var(--nurmi-coin-motion-duration) steps(1, end) both,
+    nurmi-coin-fade var(--nurmi-coin-motion-duration) var(--nurmi-coin-motion-easing) both;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .moon,
+html[data-theme-transition="active"][data-theme="light"] .sun {
+  animation: nurmi-coin-face-in var(--nurmi-coin-motion-duration) steps(1, end) both,
+    nurmi-coin-fade var(--nurmi-coin-motion-duration) var(--nurmi-coin-motion-easing) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::view-transition-group(*),
+  html::view-transition-old(*),
+  html::view-transition-new(*),
+  html[data-theme-transition="active"] .theme-coin,
+  html[data-theme-transition="active"] .theme-coin svg {
+    animation: none !important;
+  }
+}
