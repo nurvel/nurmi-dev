@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useThemePreference } from "../hooks/useThemePreference";
 
@@ -49,10 +50,41 @@ const Toggle = styled.button`
 
 export default function ThemeToggle() {
   const { theme, setTheme, ready } = useThemePreference();
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const isDark = theme === "dark";
+
+  useEffect(() => {
+    const toggle = toggleRef.current;
+    if (!toggle) return;
+
+    const forwardRetargetedClick = (event: MouseEvent) => {
+      if (
+        event.target !== document.documentElement
+        || event.detail === 0
+        || document.documentElement.dataset.themeTransition !== "active"
+        || toggle.disabled
+        || toggle.hidden
+      ) return;
+
+      const bounds = toggle.getBoundingClientRect();
+      if (
+        event.clientX < bounds.left
+        || event.clientX >= bounds.right
+        || event.clientY < bounds.top
+        || event.clientY >= bounds.bottom
+      ) return;
+
+      toggle.focus({ preventScroll: true });
+      toggle.click();
+    };
+
+    document.addEventListener("click", forwardRetargetedClick);
+    return () => document.removeEventListener("click", forwardRetargetedClick);
+  }, []);
 
   return (
     <Toggle
+      ref={toggleRef}
       type="button"
       disabled={!ready}
       hidden={!ready}
