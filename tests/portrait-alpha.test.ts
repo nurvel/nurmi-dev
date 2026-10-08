@@ -72,6 +72,24 @@ it("removes white-background contamination from the soft outer hair edge", () =>
   expect(alpha).toBeLessThan(255);
 });
 
+it("removes enclosed studio-background pockets below the ear and along the right hair edge", () => {
+  // These are background openings in the original photograph, not bright skin.
+  // A previous interior-fill repair incorrectly made them fully opaque white.
+  for (const [x, y] of [[739, 371], [751, 377], [1025, 101], [1031, 101]]) {
+    expect(portrait.rgba(x, y)[3], `studio background ${x},${y}`).toBe(0);
+  }
+  // A fine mixed curl on the right remains, without a bright white matte.
+  const [red, , , alpha] = portrait.rgba(1045, 185);
+  expect(alpha).toBeGreaterThan(0);
+  expect(alpha).toBeLessThan(255);
+  expect(red * alpha / 255 + 36 * (1 - alpha / 255)).toBeLessThan(70);
+});
+
+it("preserves the bright forehead rather than colour-keying subject highlights", () => {
+  expect(portrait.rgba(850, 100)).toEqual([242, 242, 242, 255]);
+  expect(portrait.rgba(850, 120)).toEqual([250, 250, 250, 255]);
+});
+
 it("retains the transparent background, soft hair edges and existing crop", () => {
   expect([portrait.width, portrait.height]).toEqual([1252, 1100]);
   expect(portrait.rgba(100, 500)[3]).toBe(0);
