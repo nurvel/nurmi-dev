@@ -99,6 +99,16 @@ it("softens residual white hair highlights without making opaque curls transpare
   expect(alpha).toBe(255);
 });
 
+it("fades the two owner-marked lower hair highlights without removing opaque curls", () => {
+  for (const [x, y] of [[755, 366], [996, 300]]) {
+    const [red, green, blue, alpha] = portrait.rgba(x, y);
+    expect(red, `marked hair ${x},${y}`).toBeLessThan(90);
+    expect(red).toBeGreaterThan(40);
+    expect([green, blue]).toEqual([red, red]);
+    expect(alpha).toBe(255);
+  }
+});
+
 it("retains the transparent background, soft hair edges and existing crop", () => {
   expect([portrait.width, portrait.height]).toEqual([1252, 1100]);
   expect(portrait.rgba(100, 500)[3]).toBe(0);
