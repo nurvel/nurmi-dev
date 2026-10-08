@@ -90,6 +90,15 @@ it("preserves the bright forehead rather than colour-keying subject highlights",
   expect(portrait.rgba(850, 120)).toEqual([250, 250, 250, 255]);
 });
 
+it("softens residual white hair highlights without making opaque curls transparent", () => {
+  // A bright photographic hair strand was grey 237 before local highlight retouch.
+  const [red, green, blue, alpha] = portrait.rgba(664, 274);
+  expect(red).toBeLessThan(160);
+  expect(red).toBeGreaterThan(80);
+  expect([green, blue]).toEqual([red, red]);
+  expect(alpha).toBe(255);
+});
+
 it("retains the transparent background, soft hair edges and existing crop", () => {
   expect([portrait.width, portrait.height]).toEqual([1252, 1100]);
   expect(portrait.rgba(100, 500)[3]).toBe(0);
