@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { aboutSiteContent as content } from "../data/siteContent";
 import { PageContainer } from "../components/Page";
+import ThemeToggle from "../components/ThemeToggle";
 
 const Container = styled.div`
   width: min(100% - 2 * clamp(20px, 4vw, 40px), 1080px);
@@ -21,7 +22,7 @@ const Kicker = styled.p`font:500 .75rem var(--font-display);letter-spacing:.12em
 const Name = styled.h1`font:500 clamp(2.5rem,5.55vw,5rem)/.98 var(--font-body);letter-spacing:-.03em;color:var(--color-text-primary);margin:0 0 24px;& > span{display:block;}`;
 const Lede = styled.p`font:400 clamp(1.05rem,1.6vw,1.3rem)/1.35 var(--font-body);color:var(--color-text-secondary);margin:0;max-width:480px;`;
 const PortraitWrap = styled.div`display:flex;justify-content:center;align-items:center;min-width:0;@media(max-width:820px){order:-1;}`;
-const PortraitBall = styled.div`position:relative;aspect-ratio:1;width:min(100%, 22vw, 360px);height:auto;max-height:100%;border-radius:50%;overflow:hidden;background:#f5f5f5;box-shadow:0 0 0 1px #e5e5e5,inset 0 1px 24px #0000000a;@media(max-width:820px){width:min(68vw,300px);}`;
+const PortraitBall = styled.div`position:relative;aspect-ratio:1;width:min(100%, 22vw, 360px);height:auto;max-height:100%;border-radius:50%;overflow:hidden;background:var(--color-portrait-background);box-shadow:0 0 0 1px var(--color-border),inset 0 1px 24px #0000000a;@media(max-width:820px){width:min(68vw,300px);}`;
 // The approved cutout intentionally exceeds the circle; override the global image reset.
 const Portrait = styled.img`position:absolute;width:137%;max-width:none;height:auto;left:-44%;top:2%;filter:grayscale(1) contrast(1.02);user-select:none;-webkit-user-drag:none;`;
 const Section = styled.section`padding-top:64px;`;
@@ -47,7 +48,7 @@ const Links = styled.nav`display:flex;flex-direction:column;gap:4px;align-items:
 
 export default function About() {
   return <PageContainer className="about" id="about"><Container>
-    <Topbar><span>— nurmi.dev</span><span>{content.profile.location}</span></Topbar>
+    <Topbar><span>— nurmi.dev</span><ThemeToggle /></Topbar>
     <div>
       <Hero><HeroText><Kicker>{content.profile.role}</Kicker><Name aria-label={content.profile.name}>{content.profile.nameLines.map(line=><span key={line}>{line}</span>)}</Name><Lede>{content.profile.subtitle}</Lede></HeroText><PortraitWrap><PortraitBall><Portrait src="/portrait-cutout.png" alt={content.profile.avatarAlt}/></PortraitBall></PortraitWrap></Hero>
       <Section aria-labelledby="about-heading"><SectionHead><SectionTitle as="h2" id="about-heading">About</SectionTitle></SectionHead><AboutGrid><AboutCopy>{content.about.map((paragraph,index)=><p key={index}>{paragraph.map((part,partIndex)=>{const text=part.emphasis?<strong>{part.text}</strong>:part.text;return part.href?<a key={partIndex} href={part.href} target="_blank" rel="noopener noreferrer">{text}</a>:<span key={partIndex}>{text}</span>;})}</p>)}</AboutCopy><Roles>{content.roles.map(role=><Role key={role}>{role}</Role>)}</Roles></AboutGrid></Section>

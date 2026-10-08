@@ -8,7 +8,24 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="canonical" href="https://nurmi.dev/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#fcfcfc" />
+    <link rel="stylesheet" href="/theme.css" />
+    <script>
+      (() => {
+        let theme = null;
+        try {
+          const saved = localStorage.getItem("nurmi-dev-theme");
+          if (saved === "light" || saved === "dark") theme = saved;
+        } catch {}
+        if (!theme) {
+          try { theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
+          catch { theme = "light"; }
+        }
+        document.documentElement.dataset.theme = theme;
+        const background = getComputedStyle(document.documentElement).getPropertyValue("--color-background").trim();
+        if (background) document.querySelector('meta[name="theme-color"]').content = background;
+      })();
+    </script>
     <meta
       name="description"
       content="Hands-on product engineer bridging product and code. Experienced in AI-augmented, spec-driven development and SaaS architecture."

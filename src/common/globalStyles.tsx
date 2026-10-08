@@ -6,7 +6,7 @@ const GlobalStyle = createGlobalStyle`
   @font-face{font-family:Caveat;src:url('/fonts/caveat-latin-600-normal.woff2') format('woff2');font-style:normal;font-weight:600;font-display:optional;}
   *,*::before,*::after{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
-  :root{--color-text-primary:${({ theme }) => theme.colors.textPrimary};--color-text-secondary:${({ theme }) => theme.colors.textSecondary};--color-text-muted:${({ theme }) => theme.colors.textMuted};--color-background:${({ theme }) => theme.colors.background};--color-surface:${({ theme }) => theme.colors.surface};--color-border:${({ theme }) => theme.colors.border};--color-accent:${({ theme }) => theme.colors.accent};--color-accent-decorative:${({ theme }) => theme.colors.accentDecorative};--color-focus:${({ theme }) => theme.colors.focus};--font-body:${({ theme }) => theme.typography.family};--font-display:${({ theme }) => theme.typography.displayFamily};--font-handwritten:${({ theme }) => theme.typography.handwrittenFamily};}
+  :root{--font-body:${({ theme }) => theme.typography.family};--font-display:${({ theme }) => theme.typography.displayFamily};--font-handwritten:${({ theme }) => theme.typography.handwrittenFamily};}
   body{margin:0;min-height:100vh;background:var(--color-background);color:var(--color-text-primary);font-family:var(--font-body);font-size:16px;line-height:1.5;font-synthesis:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
   #root{min-height:100vh;}
   a{color:inherit;}
