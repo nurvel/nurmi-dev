@@ -64,6 +64,16 @@ body {
   from, to { opacity: 1; }
 }
 
+@keyframes nurmi-coin-face-out {
+  0% { visibility: visible; }
+  50%, 100% { visibility: hidden; }
+}
+
+@keyframes nurmi-coin-face-in {
+  0% { visibility: hidden; }
+  50%, 100% { visibility: visible; }
+}
+
 html[data-theme-transition="active"]::view-transition-group(root),
 html[data-theme-transition="active"]::view-transition-group(nurmi-theme-toggle) {
   animation: none;
@@ -118,11 +128,29 @@ html[data-theme-transition="active"][data-theme="light"] .theme-coin {
     var(--nurmi-coin-motion-easing) both;
 }
 
+/* Select the glyph by elapsed time, not by which side faces the camera. */
+html[data-theme-transition="active"] .theme-coin .sun,
+html[data-theme-transition="active"] .theme-coin .moon {
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .sun,
+html[data-theme-transition="active"][data-theme="light"] .moon {
+  animation: nurmi-coin-face-out var(--nurmi-coin-motion-duration) steps(1, end) both;
+}
+
+html[data-theme-transition="active"][data-theme="dark"] .moon,
+html[data-theme-transition="active"][data-theme="light"] .sun {
+  animation: nurmi-coin-face-in var(--nurmi-coin-motion-duration) steps(1, end) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html::view-transition-group(*),
   html::view-transition-old(*),
   html::view-transition-new(*),
-  html[data-theme-transition="active"] .theme-coin {
+  html[data-theme-transition="active"] .theme-coin,
+  html[data-theme-transition="active"] .theme-coin svg {
     animation: none !important;
   }
 }

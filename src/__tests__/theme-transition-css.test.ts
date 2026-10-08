@@ -29,3 +29,21 @@ it("gives the coin a longer fade and keeps its transition alive until it settles
   expect(css).toContain("animation: nurmi-toggle-hold var(--nurmi-coin-motion-duration) linear both;");
   expect(css).toContain("--nurmi-theme-motion-duration: 520ms;");
 });
+
+it("switches the displayed face once at the time midpoint instead of alternating during turns", async () => {
+  const css = await readFile(resolve(process.cwd(), "public/theme.css"), "utf8");
+  expect(css).toContain("@keyframes nurmi-coin-face-out");
+  expect(css).toContain("0% { visibility: visible; }");
+  expect(css).toContain("50%, 100% { visibility: hidden; }");
+  expect(css).toContain("@keyframes nurmi-coin-face-in");
+  expect(css).toContain("0% { visibility: hidden; }");
+  expect(css).toContain("50%, 100% { visibility: visible; }");
+  const rule = (selector: string) => css.slice(css.indexOf(selector), css.indexOf("}", css.indexOf(selector)) + 1);
+  for (const [theme, outgoing, incoming] of [["dark", "sun", "moon"], ["light", "moon", "sun"]]) {
+    expect(rule(`html[data-theme-transition="active"][data-theme="${theme}"] .${outgoing}`))
+      .toContain("animation: nurmi-coin-face-out var(--nurmi-coin-motion-duration) steps(1, end) both;");
+    expect(rule(`html[data-theme-transition="active"][data-theme="${theme}"] .${incoming}`))
+      .toContain("animation: nurmi-coin-face-in var(--nurmi-coin-motion-duration) steps(1, end) both;");
+  }
+  expect(css).toContain("backface-visibility: visible;");
+});
