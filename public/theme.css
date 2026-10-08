@@ -38,6 +38,8 @@ body {
 :root {
   --nurmi-theme-motion-duration: 520ms;
   --nurmi-theme-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --nurmi-coin-motion-duration: 1100ms;
+  --nurmi-coin-motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes nurmi-theme-reveal {
@@ -46,13 +48,20 @@ body {
 }
 
 @keyframes nurmi-coin-to-dark {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(540deg); }
+  from { transform: rotateY(0deg); opacity: 1; }
+  45%, 55% { opacity: 0.3; }
+  to { transform: rotateY(540deg); opacity: 1; }
 }
 
 @keyframes nurmi-coin-to-light {
-  from { transform: rotateY(180deg); }
-  to { transform: rotateY(720deg); }
+  from { transform: rotateY(180deg); opacity: 1; }
+  45%, 55% { opacity: 0.3; }
+  to { transform: rotateY(720deg); opacity: 1; }
+}
+
+/* Keep the live toggle capture until its longer coin animation completes. */
+@keyframes nurmi-toggle-hold {
+  from, to { opacity: 1; }
 }
 
 html[data-theme-transition="active"]::view-transition-group(root),
@@ -90,7 +99,7 @@ html[data-theme-transition="active"]::view-transition-old(nurmi-theme-toggle) {
 }
 
 html[data-theme-transition="active"]::view-transition-new(nurmi-theme-toggle) {
-  animation: none;
+  animation: nurmi-toggle-hold var(--nurmi-coin-motion-duration) linear both;
   mix-blend-mode: normal;
   opacity: 1;
 }
@@ -100,13 +109,13 @@ html::view-transition {
 }
 
 html[data-theme-transition="active"][data-theme="dark"] .theme-coin {
-  animation: nurmi-coin-to-dark var(--nurmi-theme-motion-duration)
-    var(--nurmi-theme-motion-easing) both;
+  animation: nurmi-coin-to-dark var(--nurmi-coin-motion-duration)
+    var(--nurmi-coin-motion-easing) both;
 }
 
 html[data-theme-transition="active"][data-theme="light"] .theme-coin {
-  animation: nurmi-coin-to-light var(--nurmi-theme-motion-duration)
-    var(--nurmi-theme-motion-easing) both;
+  animation: nurmi-coin-to-light var(--nurmi-coin-motion-duration)
+    var(--nurmi-coin-motion-easing) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
