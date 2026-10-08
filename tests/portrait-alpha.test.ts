@@ -90,13 +90,16 @@ it("preserves the bright forehead rather than colour-keying subject highlights",
   expect(portrait.rgba(850, 120)).toEqual([250, 250, 250, 255]);
 });
 
-it("softens residual white hair highlights without making opaque curls transparent", () => {
-  // A bright photographic hair strand was grey 237 before local highlight retouch.
-  const [red, green, blue, alpha] = portrait.rgba(664, 274);
-  expect(red).toBeLessThan(160);
-  expect(red).toBeGreaterThan(80);
-  expect([green, blue]).toEqual([red, red]);
-  expect(alpha).toBe(255);
+it("softens the owner-approved outer curl highlights without making opaque hair transparent", () => {
+  // The comparison approved by the owner dims both outer curl groups,
+  // retaining grey detail rather than flattening them to black.
+  for (const [x, y] of [[664, 274], [996, 95]]) {
+    const [red, green, blue, alpha] = portrait.rgba(x, y);
+    expect(red, `outer curl ${x},${y}`).toBeLessThan(100);
+    expect(red).toBeGreaterThan(60);
+    expect([green, blue]).toEqual([red, red]);
+    expect(alpha).toBe(255);
+  }
 });
 
 it("fades the two owner-marked lower hair highlights without removing opaque curls", () => {
