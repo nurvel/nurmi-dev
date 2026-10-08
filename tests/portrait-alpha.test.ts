@@ -61,6 +61,17 @@ it("keeps facial highlights opaque and preserves their original photographic ton
   }
 });
 
+it("removes white-background contamination from the soft outer hair edge", () => {
+  // This outer curl was RGB 207 with alpha 179: a bright halo on dark backgrounds.
+  const [red, green, blue, alpha] = portrait.rgba(860, 20);
+  const onDark = red * alpha / 255 + 36 * (1 - alpha / 255);
+  expect(onDark).toBeLessThan(90);
+  expect(red).toBeLessThan(140);
+  expect([red, green, blue]).toEqual([red, red, red]);
+  expect(alpha).toBeGreaterThan(0);
+  expect(alpha).toBeLessThan(255);
+});
+
 it("retains the transparent background, soft hair edges and existing crop", () => {
   expect([portrait.width, portrait.height]).toEqual([1252, 1100]);
   expect(portrait.rgba(100, 500)[3]).toBe(0);
