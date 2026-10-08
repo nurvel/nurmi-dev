@@ -84,6 +84,8 @@ describe("career timeline UI", () => {
     opener.focus();
     fireEvent.click(opener);
     const dialog = screen.getByRole("dialog", { name: "Full-stack Developer" });
+    expect(dialog).toHaveAttribute("aria-describedby", "career-dialog-description");
+    expect(within(dialog).getByText("Full-stack development with a focus on architecture and AI.")).toHaveAttribute("id", "career-dialog-description");
     expect(dialog.textContent).toContain("Nitor");
     expect(dialog.textContent).not.toContain("Consulting");
     expect(dialog.textContent).not.toMatch(/\b20\d{2}\b/);
