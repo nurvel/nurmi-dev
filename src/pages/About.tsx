@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { aboutSiteContent as content } from "../data/siteContent";
 import { PageContainer } from "../components/Page";
 import ThemeToggle from "../components/ThemeToggle";
+import CareerTimeline from "./CareerTimeline";
 
 const Container = styled.div`
   width: min(100% - 2 * clamp(20px, 4vw, 40px), 1080px);
@@ -53,6 +54,7 @@ export default function About() {
       <Hero><HeroText><Kicker>{content.profile.role}</Kicker><Name aria-label={content.profile.name}>{content.profile.nameLines.map(line=><span key={line}>{line}</span>)}</Name><Lede>{content.profile.subtitle}</Lede></HeroText><PortraitWrap><PortraitBall><Portrait src="/portrait-cutout.png" alt={content.profile.avatarAlt}/></PortraitBall></PortraitWrap></Hero>
       <Section aria-labelledby="about-heading"><SectionHead><SectionTitle as="h2" id="about-heading">About</SectionTitle></SectionHead><AboutGrid><AboutCopy>{content.about.map((paragraph,index)=><p key={index}>{paragraph.map((part,partIndex)=>{const text=part.emphasis?<strong>{part.text}</strong>:part.text;return part.href?<a key={partIndex} href={part.href} target="_blank" rel="noopener noreferrer">{text}</a>:<span key={partIndex}>{text}</span>;})}</p>)}</AboutCopy><Roles>{content.roles.map(role=><Role key={role}>{role}</Role>)}</Roles></AboutGrid></Section>
       <Section aria-labelledby="work-heading"><SectionHead><SectionTitle as="h2" id="work-heading">{content.recentWorkTitle}</SectionTitle></SectionHead><WorkGrid>{content.recentWork.map(item=><Work key={item.title}><Client>{item.client}</Client><WorkTitle>{item.title}</WorkTitle><WorkDescription>{item.href?<a href={item.href} target="_blank" rel="noopener noreferrer">{item.description}</a>:item.description}</WorkDescription><WorkRoles>{item.roles.map(role=><WorkRole key={role}>{role}</WorkRole>)}</WorkRoles></Work>)}</WorkGrid></Section>
+      <CareerTimeline />
       <Contact aria-label="Contact"><Prompt>{content.contactPrompt}</Prompt><ContactRight><SayHello aria-hidden="true"><span>say hello</span><Arrow viewBox="0 0 88 66" fill="none"><path d="M10 8 C 42 12, 78 20, 62 52" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><path d="M50 44 L 63 56 L 72 40" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></Arrow></SayHello><Links aria-label="Contact links">{content.contacts.map(link=><a key={link.label} href={link.href} target={link.href.startsWith("http")?"_blank":undefined} rel={link.href.startsWith("http")?"noopener noreferrer":undefined}>{link.label}</a>)}</Links></ContactRight></Contact>
     </div>
   </Container></PageContainer>;
