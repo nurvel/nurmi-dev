@@ -7,7 +7,7 @@ const Head = styled.div`display:flex;align-items:baseline;justify-content:space-
 const Title = styled.h2`font:500 .75rem var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
 const Controls = styled.div`display:flex;flex-wrap:wrap;gap:16px;margin:0 0 20px;font:400 .8125rem var(--font-display);color:var(--color-text-secondary);label{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;}input{accent-color:var(--color-accent);width:18px;height:18px;}`;
 const Timeline = styled.div`--label-width:150px;--timeline-gap:20px;`;
-const Axis = styled.div`display:grid;grid-template-columns:repeat(26,minmax(0,1fr));margin:0 0 8px calc(var(--label-width) + var(--timeline-gap));color:var(--color-text-muted);font:500 .7rem var(--font-display);span{text-align:center;}span:first-child{text-align:left;}span:last-child{text-align:right;}span:not(:first-child):not(:last-child){visibility:hidden;}span:nth-child(5n+1){visibility:visible;}@media(max-width:560px){display:flex;justify-content:space-between;margin-left:0;span:not(:first-child):not(:last-child){display:none;}}`;
+const Axis = styled.div`position:relative;height:1em;margin:0 0 8px calc(var(--label-width) + var(--timeline-gap));color:var(--color-text-muted);font:500 .7rem var(--font-display);span{position:absolute;top:0;white-space:nowrap;transform:translateX(-50%);}span:first-child{transform:none;}span:last-child{transform:translateX(-100%);}@media(max-width:560px){margin-left:0;}`;
 const Employer = styled.div`display:grid;grid-template-columns:var(--label-width) minmax(0,1fr);gap:var(--timeline-gap);align-items:start;padding:10px 0;border-top:1px solid var(--color-border);@media(max-width:560px){grid-template-columns:1fr;gap:6px;}`;
 const EmployerName = styled.h3`font:600 .9rem var(--font-body);margin:0;color:var(--color-text-primary);`;
 const RoleList = styled.div`min-width:0;`;
@@ -65,7 +65,7 @@ export default function CareerTimeline() {
     <Head><Title>Career</Title></Head>
     <Controls><label><input type="checkbox" checked={showFocus} onChange={(e)=>setShowFocus(e.target.checked)} />Areas of focus</label><label><input type="checkbox" checked={showEducation} onChange={(e)=>setShowEducation(e.target.checked)} />Education</label></Controls>
     <Timeline>
-      <Axis aria-label="Year axis">{years.map(year=><span key={year}>{year}</span>)}</Axis>
+      <Axis aria-label="Year axis">{years.filter((year)=>(year-2001)%5===0).map((year,index)=><span key={year} style={{left:`${index*20}%`}}>{year}</span>)}</Axis>
       {careerData.employers.map((employer)=>{
         const assignments=layout.assignments.filter(({item})=>item.employerId===employer.id);
         return <Employer key={employer.id}><EmployerName>{employer.label}</EmployerName><RoleList>{assignments.map(({item,start,endExclusive,domain,alongside})=><RoleRow key={item.id}>

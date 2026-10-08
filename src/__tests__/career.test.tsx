@@ -75,7 +75,10 @@ describe("career timeline UI", () => {
     expect(within(career).queryByText("Alongside Technical Product Owner")).not.toBeInTheDocument();
     const nitorButton = within(career).getByRole("button", { name: "Full-stack Developer at Nitor" });
     expect(Number(nitorButton.parentElement?.querySelector("div[data-end-month]")?.getAttribute("data-end-month"))).toBeCloseTo(25 * 12 + 9 + 7 / 31);
-    expect(within(career).getByLabelText("Year axis")).toHaveTextContent("2026");
+    const axis = within(career).getByLabelText("Year axis");
+    expect(within(axis).getAllByText(/^20\d{2}$/)).toHaveLength(6);
+    expect(within(axis).getByText("2001")).toHaveStyle({ left: "0%" });
+    expect(within(axis).getByText("2026")).toHaveStyle({ left: "100%", transform: "translateX(-100%)" });
   });
 
   it("opens a date-free detail dialog, closes on Escape, and restores focus to its opener", () => {
