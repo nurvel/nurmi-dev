@@ -65,7 +65,7 @@ export default function CareerTimeline() {
     <Head><Title>Career</Title></Head>
     <Controls><label><input type="checkbox" checked={showFocus} onChange={(e)=>setShowFocus(e.target.checked)} />Areas of focus</label><label><input type="checkbox" checked={showEducation} onChange={(e)=>setShowEducation(e.target.checked)} />Education</label></Controls>
     <Timeline>
-      <Axis aria-label="Year axis">{years.filter((year)=>(year-2001)%5===0).map((year,index)=><span key={year} style={{left:`${index*20}%`}}>{year}</span>)}</Axis>
+      <Axis aria-label="Year axis">{years.filter((year)=>(year-2001)%5===0).map((year)=><span key={year} style={{left:`${offset(year*12)}%`}}>{year}</span>)}</Axis>
       {careerData.employers.map((employer)=>{
         const assignments=layout.assignments.filter(({item})=>item.employerId===employer.id);
         return <Employer key={employer.id}><EmployerName>{employer.label}</EmployerName><RoleList>{assignments.map(({item,start,endExclusive,domain,alongside})=><RoleRow key={item.id}>

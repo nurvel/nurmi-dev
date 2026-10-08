@@ -78,7 +78,9 @@ describe("career timeline UI", () => {
     const axis = within(career).getByLabelText("Year axis");
     expect(within(axis).getAllByText(/^20\d{2}$/)).toHaveLength(6);
     expect(within(axis).getByText("2001")).toHaveStyle({ left: "0%" });
-    expect(within(axis).getByText("2026")).toHaveStyle({ left: "100%", transform: "translateX(-100%)" });
+    expect(within(axis).getByText("2006")).toHaveStyle({ left: `${(5 / 26) * 100}%` });
+    expect(within(axis).getByText("2016")).toHaveStyle({ left: `${(15 / 26) * 100}%` });
+    expect(within(axis).getByText("2026")).toHaveStyle({ left: `${(25 / 26) * 100}%`, transform: "translateX(-100%)" });
   });
 
   it("opens a date-free detail dialog, closes on Escape, and restores focus to its opener", () => {
