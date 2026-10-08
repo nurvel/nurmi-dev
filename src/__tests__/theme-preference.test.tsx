@@ -42,18 +42,38 @@ describe("theme preference", () => {
     setMatchMedia(false);
   });
 
-  it("uses valid saved preferences and falls back to system for absent or invalid values", () => {
-    expect(getInitialTheme("dark", "light")).toBe("dark");
-    expect(getInitialTheme("light", "dark")).toBe("light");
-    expect(getInitialTheme(null, "dark")).toBe("dark");
-    expect(getInitialTheme("sepia", "light")).toBe("light");
+  it("uses saved preferences and defaults to dark for absent or invalid values", () => {
+    expect(getInitialTheme("dark")).toBe("dark");
+    expect(getInitialTheme("light")).toBe("light");
+    expect(getInitialTheme(null)).toBe("dark");
+    expect(getInitialTheme("sepia")).toBe("dark");
   });
 
-  it("follows system changes until an explicit choice and persists the choice", async () => {
+  it("starts dark even on a light system and ignores subsequent system changes", async () => {
     const media = setMatchMedia(false);
     render(<Probe />);
-    await screen.findByRole("button", { name: "light" });
+    await screen.findByRole("button", { name: "dark" });
     media.set(true);
+    media.set(false);
+    expect(screen.getByRole("button", { name: "dark" })).toBeInTheDocument();
+  });
+
+  it("restores a saved light choice on startup", async () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "light");
+    render(<Probe />);
+    await screen.findByRole("button", { name: "light" });
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+  });
+
+  it("initializes without a system preference API", async () => {
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: undefined });
+    render(<Probe />);
+    await screen.findByRole("button", { name: "dark" });
+  });
+
+  it("persists an explicit light choice despite system changes", async () => {
+    const media = setMatchMedia(false);
+    render(<Probe />);
     await screen.findByRole("button", { name: "dark" });
     fireEvent.click(screen.getByRole("button", { name: "dark" }));
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
@@ -61,7 +81,7 @@ describe("theme preference", () => {
     expect(screen.getByRole("button", { name: "light" })).toBeInTheDocument();
   });
 
-  it("accepts cross-tab updates and reverts to system when the preference is removed", async () => {
+  it("accepts cross-tab updates and reverts to dark when the preference is removed", async () => {
     const media = setMatchMedia(true);
     render(<Probe />);
     await screen.findByRole("button", { name: "dark" });
@@ -72,7 +92,7 @@ describe("theme preference", () => {
     fireEvent(window, new StorageEvent("storage", { key: THEME_STORAGE_KEY, newValue: null }));
     expect(screen.getByRole("button", { name: "dark" })).toBeInTheDocument();
     media.set(false);
-    await waitFor(() => expect(screen.getByRole("button", { name: "light" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "dark" })).toBeInTheDocument());
   });
 
   it("still switches when local storage is unavailable", async () => {
@@ -82,11 +102,12 @@ describe("theme preference", () => {
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
     render(<ThemeToggle />);
     const toggle = await screen.findByRole("switch", { name: "Dark mode" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
     await user.click(toggle);
-    expect(toggle).toHaveAttribute("aria-checked", "true");
-    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
     media.set(false);
-    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
   it("supports keyboard activation, preserves focus, and renders the location-free header", async () => {
@@ -95,20 +116,24 @@ describe("theme preference", () => {
     const toggle = await screen.findByRole("switch", { name: "Dark mode" });
     toggle.focus();
     await user.keyboard(" ");
-    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
     expect(toggle).toHaveFocus();
     await user.keyboard("{Enter}");
-    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByText("Helsinki, FI")).not.toBeInTheDocument();
   });
 
-  it("cleans up system listeners on unmount", async () => {
-    const media = setMatchMedia(false);
+  it("cleans up storage listeners on unmount", async () => {
+    const add = vi.spyOn(window, "addEventListener");
+    const remove = vi.spyOn(window, "removeEventListener");
     const { unmount } = render(<StrictMode><Probe /></StrictMode>);
-    await screen.findByRole("button", { name: "light" });
-    expect(media.count()).toBe(1);
+    await screen.findByRole("button", { name: "dark" });
     unmount();
-    expect(media.count()).toBe(0);
+    const listeners = add.mock.calls.filter(([event]) => event === "storage");
+    expect(listeners).toHaveLength(2);
+    for (const [event, listener] of listeners) {
+      expect(remove).toHaveBeenCalledWith(event, listener);
+    }
   });
 
   it("does not present a functional switch before browser initialization", () => {

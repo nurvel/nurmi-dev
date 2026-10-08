@@ -19,7 +19,7 @@ function readPortrait() {
   }
   const raw = inflateSync(Buffer.concat(chunks));
   const stride = width * 4;
-  expect(raw.length).toBe(height * (stride + 1));
+  expect(raw).toHaveLength(height * (stride + 1));
   const pixels = Buffer.alloc(width * height * 4);
   for (let y = 0; y < height; y++) {
     const filter = raw[y * (stride + 1)];
