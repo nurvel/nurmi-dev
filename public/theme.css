@@ -39,7 +39,7 @@ body {
   --nurmi-theme-motion-duration: 520ms;
   --nurmi-theme-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
   --nurmi-coin-motion-duration: 1100ms;
-  --nurmi-coin-motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --nurmi-coin-motion-easing: cubic-bezier(0.4, 0.2, 0.6, 0.8);
 }
 
 @keyframes nurmi-theme-reveal {
@@ -48,15 +48,20 @@ body {
 }
 
 @keyframes nurmi-coin-to-dark {
-  from { transform: rotateY(0deg); opacity: 1; }
-  45%, 55% { opacity: 0.3; }
-  to { transform: rotateY(540deg); opacity: 1; }
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(540deg); }
 }
 
 @keyframes nurmi-coin-to-light {
-  from { transform: rotateY(180deg); opacity: 1; }
+  from { transform: rotateY(180deg); }
+  to { transform: rotateY(720deg); }
+}
+
+/* Fade leaf faces: opacity on the rotating parent would flatten preserve-3d. */
+@keyframes nurmi-coin-fade {
+  from { opacity: 1; }
   45%, 55% { opacity: 0.3; }
-  to { transform: rotateY(720deg); opacity: 1; }
+  to { opacity: 1; }
 }
 
 /* Keep the live toggle capture until its longer coin animation completes. */
@@ -137,12 +142,14 @@ html[data-theme-transition="active"] .theme-coin .moon {
 
 html[data-theme-transition="active"][data-theme="dark"] .sun,
 html[data-theme-transition="active"][data-theme="light"] .moon {
-  animation: nurmi-coin-face-out var(--nurmi-coin-motion-duration) steps(1, end) both;
+  animation: nurmi-coin-face-out var(--nurmi-coin-motion-duration) steps(1, end) both,
+    nurmi-coin-fade var(--nurmi-coin-motion-duration) var(--nurmi-coin-motion-easing) both;
 }
 
 html[data-theme-transition="active"][data-theme="dark"] .moon,
 html[data-theme-transition="active"][data-theme="light"] .sun {
-  animation: nurmi-coin-face-in var(--nurmi-coin-motion-duration) steps(1, end) both;
+  animation: nurmi-coin-face-in var(--nurmi-coin-motion-duration) steps(1, end) both,
+    nurmi-coin-fade var(--nurmi-coin-motion-duration) var(--nurmi-coin-motion-easing) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
