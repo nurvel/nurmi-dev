@@ -7,8 +7,8 @@ const FooterRegion = styled.footer`
   justify-content: center;
   width: 100%;
   padding: 1rem;
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.textPrimary};
+  background: var(--color-background);
+  color: var(--color-text-primary);
   font: 400 0.75rem ${({ theme }) => theme.typography.displayFamily};
   line-height: 1.4;
   text-align: center;

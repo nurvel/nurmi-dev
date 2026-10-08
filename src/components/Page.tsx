@@ -4,8 +4,8 @@ import styled from "styled-components";
 const Section = styled.section<{ $background?: string }>`
   width: 100%;
   position: relative;
-  background-color: ${({ $background, theme }) =>
-    $background ?? theme.colors.background};
+  background-color: ${({ $background }) =>
+    $background ?? "var(--color-background)"};
 `;
 
 export const PageContent = styled.div`
