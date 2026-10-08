@@ -6,7 +6,7 @@ export function createThemeTransition() {
     generation += 1;
     const current = active;
     active = undefined;
-    document.documentElement.removeAttribute("data-theme-transition");
+    delete document.documentElement.dataset.themeTransition;
     try {
       current?.skipTransition();
     } catch {
@@ -29,7 +29,7 @@ export function createThemeTransition() {
       settled = true;
       if (applyFallback) commit();
       active = undefined;
-      document.documentElement.removeAttribute("data-theme-transition");
+      delete document.documentElement.dataset.themeTransition;
       generation += 1;
     };
 
@@ -49,7 +49,7 @@ export function createThemeTransition() {
     try {
       transition = document.startViewTransition(() => {
         if (token !== generation || settled) return;
-        document.documentElement.setAttribute("data-theme-transition", "active");
+        document.documentElement.dataset.themeTransition = "active";
         commit();
       });
     } catch {

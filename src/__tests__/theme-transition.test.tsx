@@ -209,42 +209,25 @@ it("applies the choice and clears the marker when transition setup throws", () =
   expect(document.documentElement).not.toHaveAttribute("data-theme-transition");
 });
 
-it("applies the choice and clears the marker when readiness rejects", async () => {
+it.each([
+  { phase: "readiness", reject: "rejectReady", resolveOther: "resolveUpdate" },
+  { phase: "the update callback", reject: "rejectUpdate", resolveOther: "resolveReady" },
+] as const)("applies the choice and clears the marker when $phase rejects", async ({ reject, resolveOther }) => {
   const browser = installTransitions();
   render(<ThemeToggle />);
   fireEvent.click(screen.getByRole("switch", { name: "Dark mode" }));
+  const request = browser.requests[0];
   await act(async () => {
-    browser.requests[0].rejectReady(new Error("capture unavailable"));
+    request[reject](new Error("transition unavailable"));
     await Promise.resolve();
   });
   expect(document.documentElement).toHaveAttribute("data-theme", "light");
   expect(document.documentElement).not.toHaveAttribute("data-theme-transition");
 
   await act(async () => {
-    browser.requests[0].update();
-    browser.requests[0].resolveUpdate();
-    browser.requests[0].resolveFinished();
-    await Promise.resolve();
-  });
-  expect(document.documentElement).toHaveAttribute("data-theme", "light");
-  expect(document.documentElement).not.toHaveAttribute("data-theme-transition");
-});
-
-it("applies the choice and clears the marker when the update callback rejects", async () => {
-  const browser = installTransitions();
-  render(<ThemeToggle />);
-  fireEvent.click(screen.getByRole("switch", { name: "Dark mode" }));
-  await act(async () => {
-    browser.requests[0].rejectUpdate(new Error("theme update failed"));
-    await Promise.resolve();
-  });
-  expect(document.documentElement).toHaveAttribute("data-theme", "light");
-  expect(document.documentElement).not.toHaveAttribute("data-theme-transition");
-
-  await act(async () => {
-    browser.requests[0].update();
-    browser.requests[0].resolveReady();
-    browser.requests[0].resolveFinished();
+    request.update();
+    request[resolveOther]();
+    request.resolveFinished();
     await Promise.resolve();
   });
   expect(document.documentElement).toHaveAttribute("data-theme", "light");
