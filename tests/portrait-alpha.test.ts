@@ -1,0 +1,71 @@
+import { expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { inflateSync } from "node:zlib";
+
+// Decode the checked-in 8-bit RGBA PNG without adding an image dependency.
+function readPortrait() {
+  const png = readFileSync("public/portrait-cutout.png");
+  expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  expect([...png.subarray(24, 29)]).toEqual([8, 6, 0, 0, 0]);
+  const chunks: Buffer[] = [];
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset);
+    if (png.toString("ascii", offset + 4, offset + 8) === "IDAT") {
+      chunks.push(png.subarray(offset + 8, offset + 8 + length));
+    }
+    offset += length + 12;
+  }
+  const raw = inflateSync(Buffer.concat(chunks));
+  const stride = width * 4;
+  expect(raw.length).toBe(height * (stride + 1));
+  const pixels = Buffer.alloc(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    expect(filter).toBeLessThanOrEqual(4);
+    for (let x = 0; x < stride; x++) {
+      const index = y * stride + x;
+      const left = x >= 4 ? pixels[index - 4] : 0;
+      const up = y > 0 ? pixels[index - stride] : 0;
+      const upperLeft = y > 0 && x >= 4 ? pixels[index - stride - 4] : 0;
+      let predictor = 0;
+      if (filter === 1) predictor = left;
+      if (filter === 2) predictor = up;
+      if (filter === 3) predictor = Math.floor((left + up) / 2);
+      if (filter === 4) {
+        const p = left + up - upperLeft;
+        const dl = Math.abs(p - left);
+        const du = Math.abs(p - up);
+        const dul = Math.abs(p - upperLeft);
+        predictor = dl <= du && dl <= dul ? left : du <= dul ? up : upperLeft;
+      }
+      pixels[index] = (raw[y * (stride + 1) + 1 + x] + predictor) & 255;
+    }
+  }
+  return {
+    width, height, pixels,
+    rgba: (x: number, y: number) => [...pixels.subarray((y * width + x) * 4, (y * width + x + 1) * 4)],
+  };
+}
+
+const portrait = readPortrait();
+
+it("keeps facial highlights opaque and preserves their original photographic tones", () => {
+  // Highlights previously had alpha 0, 34 or 117 and darkened with the page.
+  for (const [x, y, grey] of [[850, 200, 254], [850, 250, 227], [850, 300, 237], [800, 300, 215]]) {
+    expect(portrait.rgba(x, y), `face pixel ${x},${y}`).toEqual([grey, grey, grey, 255]);
+  }
+  for (const [x, y] of [[990, 610], [670, 730], [766, 994]]) {
+    expect(portrait.rgba(x, y)[3], `body pixel ${x},${y}`).toBe(255);
+  }
+});
+
+it("retains the transparent background, soft hair edges and existing crop", () => {
+  expect([portrait.width, portrait.height]).toEqual([1252, 1100]);
+  expect(portrait.rgba(100, 500)[3]).toBe(0);
+  expect(portrait.rgba(1000, 350)[3]).toBe(0);
+  // Actual outer hair/silhouette pixels, not interior highlights.
+  expect(portrait.rgba(860, 20)[3]).toBeGreaterThan(0);
+  expect(portrait.rgba(860, 20)[3]).toBeLessThan(255);
+});
