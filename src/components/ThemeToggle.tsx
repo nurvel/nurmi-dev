@@ -18,8 +18,7 @@ const Toggle = styled.button`
   background: transparent;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-  &:hover { background: color-mix(in srgb, var(--color-text-primary) 7%, transparent); }
+  transition: color 150ms ease;
   &:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   view-transition-name: nurmi-theme-toggle;
