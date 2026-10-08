@@ -68,7 +68,7 @@ describe("theme preference", () => {
   it("initializes without a system preference API", async () => {
     Object.defineProperty(window, "matchMedia", { configurable: true, value: undefined });
     render(<Probe />);
-    await screen.findByRole("button", { name: "dark" });
+    expect(await screen.findByRole("button", { name: "dark" })).toBeInTheDocument();
   });
 
   it("persists an explicit light choice despite system changes", async () => {
