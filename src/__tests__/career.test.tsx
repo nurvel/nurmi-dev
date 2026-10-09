@@ -90,8 +90,9 @@ describe("career timeline UI", () => {
     expect(careerData.assignments.find(({ id }) => id === "freelance_web")).toMatchObject({ start: "2004", end: "2009" });
     expect(career.querySelector('[data-role-rail="freelance_web"]')).toHaveAttribute("data-end-month", "24");
     expect(axis).toHaveAttribute("data-month-count", "228");
-    expect(getComputedStyle(axis).width).toBe("calc(100% + 190px)");
-    expect(axis.textContent).toContain("2028");
+    expect(axis.textContent).toContain("2027");
+    expect(axis.textContent).not.toContain("2028");
+    expect(axis.lastElementChild).toHaveTextContent("2027");
   });
 
   it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {
@@ -120,59 +121,18 @@ describe("career timeline UI", () => {
     }
   });
 
-  it("exposes bounded keyboard-operable zoom and keeps the grid continuous through the label tail", () => {
+  it("fits the timeline to its container without native zoom or horizontal scrolling", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
-    expect(within(career).queryByText(/Timeline scrolls horizontally/)).not.toBeInTheDocument();
-    const zoom = within(career).getByRole("slider", { name: "Timeline zoom" });
-    const scroll = within(career).getByLabelText("Scrollable career timeline");
-    expect(scroll.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(getComputedStyle(scroll).touchAction).toBe("pan-x pan-y");
-    expect(zoom).toHaveAttribute("min", "75");
-    expect([...document.querySelectorAll("style")].map(s=>s.textContent).join(" ")).toContain("width:min(260px,35vw)");
-    expect(zoom).toHaveAttribute("max", "250");
-    expect(zoom).toHaveValue("100");
-    expect(within(career).getByText("100%")).toBeVisible();
-    const lane = career.querySelector<HTMLElement>("[data-employer-id]")!;
-    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(710 * 48 / 228);
-    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
-    expect(rules.some((rule) => lane.classList.toString().split(" ").some((name) => rule.includes(`.${name}:before`) && rule.includes("calc(100% + 190px)") && rule.includes("pointer-events: none")))).toBe(true);
-    fireEvent.change(zoom, { target: { value: "75" } });
-    expect(zoom).toHaveValue("75");
-    expect(within(career).getByText("75%")).toBeVisible();
-    expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "485");
-    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(485 * 48 / 228);
-    expect(getComputedStyle(career.querySelector("[data-role-row]")!).height).toBe("24px");
-    fireEvent.change(zoom, { target: { value: "250" } });
-    expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "2060");
-  });
-
-  it("uses deterministic two-touch pinch zoom, cleans up cancelled gestures, and leaves one-finger scrolling alone", () => {
-    render(<App />);
-    const career = screen.getByRole("region", { name: "Career" });
-    const scroll = within(career).getByLabelText("Scrollable career timeline");
-    const touch = (clientX: number, clientY = 20) => ({ clientX, clientY, identifier: clientX });
-    fireEvent.touchStart(scroll, { touches: [touch(100), touch(123)] });
-    fireEvent.touchMove(scroll, { touches: [touch(100), touch(250)] });
-    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("100");
-    fireEvent.touchEnd(scroll, { touches: [] });
-    fireEvent.touchStart(scroll, { touches: [touch(100, 20), touch(140, 80)] });
-    fireEvent.touchMove(scroll, { touches: [touch(100, 20), touch(250, 80)] });
-    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("100");
-    fireEvent.touchEnd(scroll, { touches: [] });
-    fireEvent.touchStart(scroll, { touches: [touch(100), touch(200)] });
-    fireEvent.touchMove(scroll, { touches: [touch(100), touch(250)] });
-    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("150");
-    fireEvent.touchCancel(scroll, { touches: [] });
-    fireEvent.touchStart(scroll, { touches: [touch(100), touch(200)] });
-    fireEvent.touchMove(scroll, { touches: [touch(100), touch(100)] });
-    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("75");
-    fireEvent.touchEnd(scroll, { touches: [] });
-    fireEvent.click(career.querySelector('[data-role-rail="nitor_current"]')!);
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    fireEvent.touchStart(scroll, { touches: [touch(100)] });
-    fireEvent.touchMove(scroll, { touches: [touch(100)] });
-    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("75");
+    expect(within(career).queryByRole("slider", { name: /zoom/i })).not.toBeInTheDocument();
+    const scroll = within(career).getByLabelText("Career timeline");
+    const scrollStyles = [...document.querySelectorAll("style")].map((style) => style.textContent).join(" ");
+    expect(scrollStyles).toContain("overflow-x:hidden");
+    expect(scrollStyles).not.toContain("min-width:900px");
+    expect(scrollStyles).not.toContain("padding-right:190px");
+    expect(scrollStyles).not.toContain("touch-action");
+    expect(scroll.querySelector("[data-employer-id]")).toBeInTheDocument();
+    expect(scroll.querySelector("[data-role-rail]")).toBeInTheDocument();
   });
 
   it("distinguishes employers with quiet typography instead of a colored badge", () => {
@@ -180,7 +140,7 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     const heading = within(career).getByRole("button", { name: "Nitor details" });
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
-    expect(getComputedStyle(heading).width).toBe("max-content");
+    expect(heading.style.width).toContain("calc(");
     expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
     expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("#b3abbf");
     expect(getComputedStyle(heading).borderTopColor).toBe("rgba(0, 0, 0, 0)");
@@ -198,12 +158,12 @@ describe("career timeline UI", () => {
   it("keeps the employer heading close to its role rows", () => {
     render(<App />);
     const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
-    expect(getComputedStyle(group).paddingTop).toBe("24px");
+    expect(getComputedStyle(group).paddingTop).toBe("28px");
     const heading = group.querySelector('button[aria-label="twoday details"]')!;
     expect(getComputedStyle(heading).display).toBe("flex");
     expect(getComputedStyle(heading).alignItems).toBe("flex-end");
     const firstLabel = group.querySelector('[data-role-row] span')!;
-    expect(getComputedStyle(firstLabel).top).toBe("6.5px");
+    expect(firstLabel).toHaveAttribute("data-label-side", "left");
   });
 
   it("aligns employer headings with the first role segment instead of the end of late intervals", () => {
@@ -213,11 +173,10 @@ describe("career timeline UI", () => {
       const segments = Array.from(heading.parentElement!.querySelectorAll<HTMLElement>("[data-role-rail]"));
       const start = Math.min(...segments.map((segment) => parseFloat(getComputedStyle(segment).left)));
       expect(parseFloat(heading.style.left)).toBeCloseTo(start);
-      expect(heading.style.transform).toBe("none");
+      expect(heading.style.transform).toBe("");
     }
     for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
-      expect(heading.style.maxWidth).toContain("+ 190px)");
-      expect(Number(heading.style.maxWidth.match(/[\d.]+/)?.[0])).toBeCloseTo(100 - parseFloat(heading.style.left), 3);
+      expect(heading.style.width).toContain("calc(");
     }
   });
 
@@ -244,27 +203,25 @@ describe("career timeline UI", () => {
       expect(parseFloat(getComputedStyle(label).left)).toBeCloseTo(parseFloat(getComputedStyle(rail).left));
       expect(getComputedStyle(label).top).toBe("0px");
       expect(getComputedStyle(label).transform).toBe("none");
-      expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
+      expect(getComputedStyle(row).minHeight).toBe("44px");
     }
   });
 
-  it("puts each grouped role name just after its last rail with no left label gutter", () => {
+  it("places role labels on their approved side of the shared date axis", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
     const axis = within(career).getByLabelText("Year axis");
     expect(getComputedStyle(axis.parentElement!).getPropertyValue("--axis-left")).toBe("0px");
-    for (const both of [true, false]) {
-      if (!both) fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
-      for (const row of career.querySelectorAll("[data-role-row]")) {
-        const label = row.querySelector<HTMLElement>("span")!;
-        const end = Math.max(...Array.from(row.querySelectorAll<HTMLElement>("[data-role-rail]"), (rail) => Number(rail.dataset.endMonth)));
-        expect(parseFloat(label.style.left)).toBeCloseTo(end / 228 * 100);
-        expect(getComputedStyle(label).marginLeft).toBe("8px");
-        expect(getComputedStyle(label).textAlign).toBe("left");
-        expect(getComputedStyle(label).transform).toBe("translateY(-50%)");
-        expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
-      }
-    }
+    const combinedTwoday = career.querySelector('[data-employer-id="twoday"] [data-role-row="Team Lead"] span');
+    expect(combinedTwoday).toHaveAttribute("data-label-side", "left");
+    expect(career.querySelector('[data-employer-id="nitor"] [data-role-row] span')).toHaveAttribute("data-label-side", "left");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+    const fullStack = career.querySelector('[data-role-row="Full-stack Developer"]')!;
+    expect(fullStack.querySelector("span")).toHaveAttribute("data-label-side", "left");
+    expect(fullStack.querySelectorAll("[data-role-rail]")).toHaveLength(5);
+    expect(career.querySelector('[data-role-row="Team Lead"] span')).toHaveAttribute("data-label-side", "left");
+    expect(career.querySelector('[data-role-row="Technical Product Owner"] span')).toHaveAttribute("data-label-side", "left");
+    expect(axis.textContent).toContain("2027");
   });
 
   it("uses compact inline labels and identical employer-only and role-only row layouts", () => {
@@ -272,14 +229,14 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     const roleRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
-    expect(getComputedStyle(roleRow).height).toBe("24px");
+    expect(getComputedStyle(roleRow).minHeight).toBe("40px");
     expect(getComputedStyle(roleRow.querySelector("span")!).transform).toBe("translateY(-50%)");
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     const employerRows = career.querySelectorAll('[data-row="employers"]');
     expect(employerRows).toHaveLength(9);
     employerRows.forEach((row) => {
-      expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
+      expect(getComputedStyle(row).minHeight).toBe("44px");
       expect(row.querySelectorAll("button")).toHaveLength(1);
     });
   });
@@ -290,7 +247,8 @@ describe("career timeline UI", () => {
     const employer = within(career).getByRole("button", { name: "Nitor details" });
     const segment = career.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
     const label = segment.parentElement!.querySelector("span")!;
-    expect(parseFloat(getComputedStyle(employer).fontSize)).toBeLessThan(parseFloat(getComputedStyle(label).fontSize));
+    expect(parseFloat(getComputedStyle(employer).fontSize)).toBeGreaterThanOrEqual(12);
+    expect(getComputedStyle(employer).fontWeight).toBe("700");
     expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
     expect(within(career).queryByRole("button", { name: /Education/ })).not.toBeInTheDocument();
   });
