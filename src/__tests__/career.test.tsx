@@ -84,8 +84,8 @@ describe("career timeline UI", () => {
     for (const row of career.querySelectorAll<HTMLElement>('[data-row="employers"]')) {
       const label = row.querySelector<HTMLElement>("[data-employer-label]")!;
       const rail = row.querySelector<HTMLElement>("[data-employer-rail]")!;
-      // The visible rail begins 19px inside its full 24px hit area.
-      expect(parseFloat(rail.style.top) + 19).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
+      // 24px hit area minus 5px rail and 4px bottom inset.
+      expect(parseFloat(rail.style.top) + 15).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
       expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
     }
   });
@@ -241,8 +241,8 @@ describe("career timeline UI", () => {
       expect(label.style.left).toMatch(/px$/);
       expect(getComputedStyle(label).top).toBe("0px");
       expect(getComputedStyle(label).transform).toBe("none");
-      // The visible rail begins 19px inside its full 24px hit area.
-      expect(parseFloat(rail.style.top) + 19).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
+      // 24px hit area minus 5px rail and 4px bottom inset.
+      expect(parseFloat(rail.style.top) + 15).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
       expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
     }
   });

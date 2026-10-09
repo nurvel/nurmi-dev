@@ -70,8 +70,8 @@ export default function CareerTimeline(){
         else{
           const labelHeight=Math.max(16,label.offsetHeight,label.scrollHeight);
           const rail=group.querySelector<HTMLElement>("[data-employer-rail]");
-          // The visible rail starts 19px inside the 24px hit area.
-          const railTop=Math.max(0,labelHeight+4-19);
+          // 24px hit area minus the 5px rail and 4px bottom inset.
+          const railTop=Math.max(0,labelHeight+4-15);
           if(rail)rail.style.top=`${railTop}px`;
           group.style.minHeight=`${Math.max(28,railTop+24)}px`;
         }
