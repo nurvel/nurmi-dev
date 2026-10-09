@@ -116,6 +116,11 @@ describe("career timeline UI", () => {
     render(<App />);
     const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
     expect(getComputedStyle(group).paddingTop).toBe("24px");
+    const heading = group.querySelector('button[aria-label="twoday details"]')!;
+    expect(getComputedStyle(heading).display).toBe("flex");
+    expect(getComputedStyle(heading).alignItems).toBe("flex-end");
+    const firstLabel = group.querySelector('[data-role-row] span')!;
+    expect(getComputedStyle(firstLabel).top).toBe("6.5px");
   });
 
   it("aligns employer headings with the first role segment instead of the end of late intervals", () => {
