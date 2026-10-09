@@ -75,10 +75,27 @@ describe("career timeline UI", () => {
     fireEvent.click(rolesFilter);
     fireEvent.click(employersFilter);
     fireEvent.click(rolesFilter);
-    expect(career.querySelectorAll('[data-row="employers"]')).toHaveLength(1);
+    expect(career.querySelectorAll('[data-row="employers"]')).toHaveLength(9);
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
     fireEvent.click(within(career).getByRole("button", { name: "Nitor details" }));
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
+  });
+
+  it("uses compact inline labels and identical employer-only and role-only row layouts", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+    const roleRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
+    expect(getComputedStyle(roleRow).height).toBe("32px");
+    expect(getComputedStyle(roleRow.querySelector("span")!).transform).toBe("translateY(-50%)");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    const employerRows = career.querySelectorAll('[data-row="employers"]');
+    expect(employerRows).toHaveLength(9);
+    employerRows.forEach((row) => {
+      expect(getComputedStyle(row).height).toBe("32px");
+      expect(row.querySelectorAll("button")).toHaveLength(1);
+    });
   });
 
   it("keeps employers visually secondary and role segments easy to activate", () => {
@@ -91,7 +108,7 @@ describe("career timeline UI", () => {
     expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
     fireEvent.click(within(career).getByRole("button", { name: /Education & certificates/ }));
     const education = within(career).getByLabelText("Education & certificates");
-    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("4px");
+    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("190px");
   });
 
   it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
@@ -139,12 +156,12 @@ describe("career timeline UI", () => {
     const focus = within(career).getByRole("checkbox", { name: "Areas of focus" });
     expect(focus).not.toBeChecked();
     expect(within(career).queryByText("Web services")).not.toBeInTheDocument();
-    const laneHeights = Array.from(career.querySelectorAll(".sc-lanes"), (lane) => getComputedStyle(lane).height);
+    const laneHeights = Array.from(career.querySelectorAll("[data-role-row]"), (lane) => getComputedStyle(lane).height);
     const roleCount = career.querySelectorAll("[data-role-rail]").length;
     expect(within(career).getByLabelText("Year axis").textContent).toBe("200120062011201620212026");
     fireEvent.click(focus);
     expect(within(career).getByText("Web services")).toBeVisible();
-    expect(Array.from(career.querySelectorAll(".sc-lanes"), (lane) => getComputedStyle(lane).height)).toEqual(laneHeights);
+    expect(Array.from(career.querySelectorAll("[data-role-row]"), (lane) => getComputedStyle(lane).height)).toEqual(laneHeights);
     expect(within(career.querySelector(".sc-focus-summary")!).getByText(/Freelance:/).closest("p")).toHaveTextContent("Web services");
     expect(career.querySelector('[data-employer-id="freelance"]')).not.toContainElement(within(career).getByText("Web services"));
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
