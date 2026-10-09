@@ -73,13 +73,17 @@ describe("career timeline UI", () => {
     expect(within(career).getByLabelText("Year axis").textContent).toBe("200120062011201620212026");
     fireEvent.click(focus);
     expect(within(career).getByText("Web services")).toBeVisible();
+    expect(within(career.querySelector(".sc-focus-summary")!).getByText(/Freelance:/).closest("p")).toHaveTextContent("Web services");
+    expect(career.querySelector('[data-employer-id="freelance"]')).not.toContainElement(within(career).getByText("Web services"));
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
     expect(career.querySelectorAll("[data-mode]")).toHaveLength(modeCount);
     const education = within(career).getByRole("button", { name: /Education & certificates/ });
     expect(education).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(education);
     expect(education).toHaveAttribute("aria-expanded", "true");
+    expect(within(career).getByLabelText("Education year axis").textContent).toBe("200120062011201620212026");
     expect(within(career).getAllByRole("button", { name: /^Education detail:/ })).toHaveLength(10);
+    expect(getComputedStyle(within(career).getByRole("button", { name: "Education detail: Media Assistant" })).minHeight).toBe("56px");
     expect(within(career).getByRole("button", { name: "Education detail: Data Analytics" })).toHaveAttribute("data-kind", "point");
     expect(within(career).getAllByRole("button", { name: / details$/i })).toHaveLength(9);
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
