@@ -81,6 +81,19 @@ describe("career timeline UI", () => {
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
+  it("keeps employers visually secondary and role segments easy to activate", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const employer = within(career).getByRole("button", { name: "Nitor details" });
+    const segment = career.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
+    const label = segment.parentElement!.querySelector("span")!;
+    expect(parseFloat(getComputedStyle(employer).fontSize)).toBeLessThan(parseFloat(getComputedStyle(label).fontSize));
+    expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
+    fireEvent.click(within(career).getByRole("button", { name: /Education & certificates/ }));
+    const education = within(career).getByLabelText("Education & certificates");
+    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("4px");
+  });
+
   it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
