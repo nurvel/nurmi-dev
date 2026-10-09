@@ -54,6 +54,47 @@ describe("career data", () => {
 });
 
 describe("career timeline UI", () => {
+  it("filters employers and roles independently while keeping shared rows and truthful role segments", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const employersFilter = within(career).getByRole("checkbox", { name: "Employers" });
+    const rolesFilter = within(career).getByRole("checkbox", { name: "Roles" });
+    expect(employersFilter).toBeChecked();
+    expect(rolesFilter).toBeChecked();
+    fireEvent.click(employersFilter);
+    expect(career.querySelectorAll('[data-row="employers"]')).toHaveLength(0);
+    const roleRows = Array.from(career.querySelectorAll<HTMLElement>("[data-role-row]"));
+    expect(new Set(roleRows.map((row) => row.getAttribute("data-role-row"))).size).toBe(roleRows.length);
+    const fullStack = roleRows.find((row) => row.getAttribute("data-role-row") === "Full-stack Developer");
+    expect(fullStack).toHaveAttribute("data-role-row", "Full-stack Developer");
+    expect(fullStack?.querySelectorAll("[data-role-rail]")).toHaveLength(5);
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+    fireEvent.click(rolesFilter);
+    expect(within(career).getByText(/Select employers or roles/)).toBeVisible();
+    expect(career.querySelectorAll("[data-employer-id], [data-role-rail]")).toHaveLength(0);
+    fireEvent.click(rolesFilter);
+    fireEvent.click(employersFilter);
+    fireEvent.click(rolesFilter);
+    expect(career.querySelectorAll('[data-row="employers"]')).toHaveLength(1);
+    expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
+    fireEvent.click(within(career).getByRole("button", { name: "Nitor details" }));
+    expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
+  });
+
+  it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const repeatedRows = Array.from(career.querySelectorAll<HTMLElement>('[data-role-row="Full-stack Developer"]'));
+    expect(repeatedRows).toHaveLength(3);
+    expect(repeatedRows.map((row) => row.querySelectorAll("[data-role-rail]").length)).toEqual([2, 2, 1]);
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+    const sharedRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
+    expect(sharedRow.querySelectorAll("[data-role-rail]")).toHaveLength(5);
+    const nitorSegment = sharedRow.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
+    fireEvent.click(nitorSegment);
+    expect(screen.getByRole("dialog", { name: "Nitor" })).toHaveTextContent("Full-stack development with a focus on architecture and AI.");
+  });
+
   it("shows roles on one career timeline with domain colors instead of work modes", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
