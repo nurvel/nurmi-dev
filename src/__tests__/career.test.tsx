@@ -99,17 +99,17 @@ describe("career timeline UI", () => {
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
     expect(getComputedStyle(heading).width).toBe("max-content");
     expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
-    expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("var(--color-text-secondary)");
+    expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("#b3abbf");
     expect(getComputedStyle(heading).borderTopColor).toBe("rgba(0, 0, 0, 0)");
     expect(getComputedStyle(heading).backgroundColor).toBe("rgba(0, 0, 0, 0)");
-    expect(getComputedStyle(heading).fontWeight).toBe("600");
+    expect(getComputedStyle(heading).fontWeight).toBe("700");
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     const label = career.querySelector('[data-employer-id="nitor"] span')!;
     expect(getComputedStyle(label).borderRadius).toBe("4px");
     expect(getComputedStyle(label).borderTopStyle).toBe("solid");
     expect(getComputedStyle(label).borderTopColor).toBe("rgba(0, 0, 0, 0)");
     expect(getComputedStyle(label).backgroundColor).toBe("rgba(0, 0, 0, 0)");
-    expect(getComputedStyle(label).fontWeight).toBe("600");
+    expect(getComputedStyle(label).fontWeight).toBe("700");
   });
 
   it("keeps the employer heading close to its role rows", () => {
