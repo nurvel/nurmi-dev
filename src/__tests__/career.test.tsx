@@ -81,6 +81,30 @@ describe("career timeline UI", () => {
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
+  it("starts the shared axis at Freelance and continues through the role label space", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const axis = within(career).getByLabelText("Year axis");
+    expect(axis.querySelector("span")?.textContent).toBe("2004");
+    expect(career.querySelector('[data-role-rail="freelance_web"]')).toHaveAttribute("data-start-month", "0");
+    expect(axis).toHaveAttribute("data-month-count", "276");
+    expect(getComputedStyle(axis).width).toBe("calc(100% + 190px)");
+    expect(axis.textContent).toContain("2028");
+  });
+
+  it("distinguishes employers with a tinted bordered badge", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const heading = within(career).getByRole("button", { name: "Nitor details" });
+    expect(getComputedStyle(heading).borderRadius).toBe("4px");
+    expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
+    expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("#b9a3ef");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    const label = career.querySelector('[data-employer-id="nitor"] span')!;
+    expect(getComputedStyle(label).borderRadius).toBe("4px");
+    expect(getComputedStyle(label).borderTopStyle).toBe("solid");
+  });
+
   it("keeps the employer heading close to its role rows", () => {
     render(<App />);
     const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
@@ -97,7 +121,8 @@ describe("career timeline UI", () => {
       expect(heading.style.transform).toBe("none");
     }
     for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
-      expect(parseFloat(heading.style.maxWidth)).toBeCloseTo(100 - parseFloat(heading.style.left));
+      expect(heading.style.maxWidth).toContain("+ 190px)");
+      expect(Number(heading.style.maxWidth.match(/[\d.]+/)?.[0])).toBeCloseTo(100 - parseFloat(heading.style.left), 3);
     }
   });
 
@@ -124,7 +149,7 @@ describe("career timeline UI", () => {
       expect(parseFloat(getComputedStyle(label).left)).toBeCloseTo(parseFloat(getComputedStyle(rail).left));
       expect(getComputedStyle(label).top).toBe("0px");
       expect(getComputedStyle(label).transform).toBe("none");
-      expect(getComputedStyle(row).height).toBe("32px");
+      expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
     }
   });
 
@@ -138,11 +163,11 @@ describe("career timeline UI", () => {
       for (const row of career.querySelectorAll("[data-role-row]")) {
         const label = row.querySelector<HTMLElement>("span")!;
         const end = Math.max(...Array.from(row.querySelectorAll<HTMLElement>("[data-role-rail]"), (rail) => Number(rail.dataset.endMonth)));
-        expect(parseFloat(label.style.left)).toBeCloseTo(end / 312 * 100);
+        expect(parseFloat(label.style.left)).toBeCloseTo(end / 276 * 100);
         expect(getComputedStyle(label).marginLeft).toBe("8px");
         expect(getComputedStyle(label).textAlign).toBe("left");
         expect(getComputedStyle(label).transform).toBe("translateY(-50%)");
-        expect(getComputedStyle(row).height).toBe("32px");
+        expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
       }
     }
   });
@@ -152,14 +177,14 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     const roleRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
-    expect(getComputedStyle(roleRow).height).toBe("32px");
+    expect(getComputedStyle(roleRow).height).toBe("24px");
     expect(getComputedStyle(roleRow.querySelector("span")!).transform).toBe("translateY(-50%)");
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     const employerRows = career.querySelectorAll('[data-row="employers"]');
     expect(employerRows).toHaveLength(9);
     employerRows.forEach((row) => {
-      expect(getComputedStyle(row).height).toBe("32px");
+      expect(getComputedStyle(row).height).toBe(row.hasAttribute("data-row") ? "28px" : "24px");
       expect(row.querySelectorAll("button")).toHaveLength(1);
     });
   });
@@ -172,9 +197,7 @@ describe("career timeline UI", () => {
     const label = segment.parentElement!.querySelector("span")!;
     expect(parseFloat(getComputedStyle(employer).fontSize)).toBeLessThan(parseFloat(getComputedStyle(label).fontSize));
     expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
-    fireEvent.click(within(career).getByRole("button", { name: /Education & certificates/ }));
-    const education = within(career).getByLabelText("Education & certificates");
-    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("0px");
+    expect(within(career).queryByRole("button", { name: /Education/ })).not.toBeInTheDocument();
   });
 
   it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
@@ -216,49 +239,21 @@ describe("career timeline UI", () => {
     expect(career.querySelector('[data-employer-id="nitor"]')).toHaveAttribute("data-domain", "it");
   });
 
-  it("keeps focus hidden and education separately disclosed", () => {
+  it("removes education and focus controls while retaining career placement and details", () => {
     render(<App />);
-    const recent = screen.getByRole("heading", { name: "Recent work" }).closest("section")!;
     const career = screen.getByRole("region", { name: "Career" });
+    const recent = screen.getByRole("heading", { name: "Recent work" }).closest("section")!;
     const contact = screen.getByRole("region", { name: "Contact" });
     expect(recent.compareDocumentPosition(career) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(career.compareDocumentPosition(contact) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(career).getAllByRole("button", { name: / details$/i })).toHaveLength(9);
-
-    expect(within(career).getByRole("button", { name: "Freelance details" })).toBeInTheDocument();
-    expect(within(career).queryByText(/VR LOGISTICS|HSL|Aidon|Capgemini/i)).not.toBeInTheDocument();
-    const focus = within(career).getByRole("checkbox", { name: "Areas of focus" });
-    expect(focus).not.toBeChecked();
-    expect(within(career).queryByText("Web services")).not.toBeInTheDocument();
-    const laneHeights = Array.from(career.querySelectorAll("[data-role-row]"), (lane) => getComputedStyle(lane).height);
-    const roleCount = career.querySelectorAll("[data-role-rail]").length;
-    expect(within(career).getByLabelText("Year axis").textContent).toBe("200120062011201620212026");
-    fireEvent.click(focus);
-    expect(within(career).getByText("Web services")).toBeVisible();
-    expect(Array.from(career.querySelectorAll("[data-role-row]"), (lane) => getComputedStyle(lane).height)).toEqual(laneHeights);
-    expect(within(career.querySelector(".sc-focus-summary")!).getByText(/Freelance:/).closest("p")).toHaveTextContent("Web services");
-    expect(career.querySelector('[data-employer-id="freelance"]')).not.toContainElement(within(career).getByText("Web services"));
-    expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
-    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(roleCount);
-    const education = within(career).getByRole("button", { name: /Education & certificates/ });
-    expect(education).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(education);
-    expect(education).toHaveAttribute("aria-expanded", "true");
-    expect(within(career).getByLabelText("Education year axis").textContent).toBe("200120062011201620212026");
-    expect(within(career).getAllByRole("button", { name: /^Education detail:/ })).toHaveLength(10);
-    expect(getComputedStyle(within(career).getByRole("button", { name: "Education detail: Media Assistant" })).minHeight).toBe("56px");
-    expect(within(career).getByRole("button", { name: "Education detail: Data Analytics" })).toHaveAttribute("data-kind", "point");
-    expect(within(career).getAllByRole("button", { name: / details$/i })).toHaveLength(9);
-    expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
-    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
-    const nitor = career.querySelector('[data-employer-id="nitor"]');
-    expect(nitor?.querySelector("[data-role-rail]")).toHaveAttribute("data-role-rail", "nitor_current");
-    expect(nitor).toHaveAttribute("data-end-month");
-    expect(Number(nitor?.getAttribute("data-end-month"))).toBeCloseTo(25 * 12 + 9 + 7 / 31);
-    education.focus();
-    fireEvent.click(education);
-    expect(education).toHaveAttribute("aria-expanded", "false");
-    expect(education).toHaveFocus();
+    expect(within(career).getAllByRole("checkbox")).toHaveLength(2);
+    expect(within(career).queryByRole("checkbox", { name: "Areas of focus" })).not.toBeInTheDocument();
+    expect(within(career).queryByRole("button", { name: /Education/ })).not.toBeInTheDocument();
+    expect(career.querySelector('#career-education')).toBeNull();
+    expect(within(career).getAllByRole("button", { name: / details$/ })).toHaveLength(9);
+    expect(career.querySelectorAll('[data-role-rail]')).toHaveLength(14);
+    fireEvent.click(within(career).getByRole("button", { name: "Nitor details" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Architecture & AI");
   });
 
   it("exposes all employer roles in one date-free dialog and restores focus after Escape", () => {
@@ -308,16 +303,5 @@ describe("career timeline UI", () => {
     expect(within(dialog).getByText("Alongside Full-stack Developer, Technical Product Owner")).toBeVisible();
   });
 
-  it("shows education spans and points, with date-free detail", () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: /Education & certificates/ }));
-    const cs = screen.getByRole("button", { name: "Education detail: Computer Science · 50 credits" });
-    expect(cs).toHaveAttribute("data-kind", "span");
-    const cert = screen.getByRole("button", { name: "Education detail: Certified SAFe 4 DevOps Practitioner" });
-    expect(cert).toHaveAttribute("data-kind", "point");
-    fireEvent.click(cert);
-    const dialog = screen.getByRole("dialog", { name: "Certified SAFe 4 DevOps Practitioner" });
-    expect(dialog.textContent).toContain("Scaled Agile, Inc.");
-    expect(dialog.textContent).not.toMatch(/\b20\d{2}\b|valid until|currently valid/i);
-  });
+
 });
