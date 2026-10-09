@@ -81,15 +81,43 @@ describe("career timeline UI", () => {
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
-  it("starts the shared axis at Freelance and continues through the role label space", () => {
+  it("starts the shared axis at 2008 and crops earlier history without changing career facts", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
     const axis = within(career).getByLabelText("Year axis");
-    expect(axis.querySelector("span")?.textContent).toBe("2004");
-    expect(career.querySelector('[data-role-rail="freelance_web"]')).toHaveAttribute("data-start-month", "0");
-    expect(axis).toHaveAttribute("data-month-count", "276");
+    expect(axis.querySelector("span")?.textContent).toBe("2008");
+    expect(career.querySelector('[data-role-rail="freelance_web"]')).toHaveAttribute("data-start-month", "-48");
+    expect(careerData.assignments.find(({ id }) => id === "freelance_web")).toMatchObject({ start: "2004", end: "2009" });
+    expect(career.querySelector('[data-role-rail="freelance_web"]')).toHaveAttribute("data-end-month", "24");
+    expect(axis).toHaveAttribute("data-month-count", "228");
     expect(getComputedStyle(axis).width).toBe("calc(100% + 190px)");
     expect(axis.textContent).toContain("2028");
+  });
+
+  it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const employers = within(career).getByRole("checkbox", { name: "Employers" });
+    const roles = within(career).getByRole("checkbox", { name: "Roles" });
+    for (const mode of ["both", "roles", "employers"]) {
+      if (mode === "roles") fireEvent.click(employers);
+      if (mode === "employers") { fireEvent.click(employers); fireEvent.click(roles); }
+      const rail = career.querySelector<HTMLElement>(mode === "employers" ? '[data-employer-rail="freelance"]' : '[data-role-rail="freelance_web"]')!;
+      expect(rail).toHaveAttribute("data-continues-before", "true");
+      expect(rail).toHaveAttribute("aria-description", "Continues from before the visible timeline.");
+      expect(career.querySelectorAll('button[data-continues-before="true"]')).toHaveLength(1);
+      expect(parseFloat(getComputedStyle(rail).left)).toBe(0);
+      expect(Number(getComputedStyle(rail).width.match(/,\s*([\d.]+)%/)?.[1])).toBeCloseTo(24 / 228 * 100);
+      expect(getComputedStyle(rail).height).toBe("24px");
+      const rules = Array.from(document.styleSheets).flatMap(sheet => Array.from(sheet.cssRules, rule => rule.cssText));
+      expect(rules.some(rule => rule.includes('[data-continues-before="true"]:after'))).toBe(true);
+      // jsdom omits mask-image declarations; real-browser acceptance checks the computed mask.
+      expect([...document.querySelectorAll("style")].map(style => style.textContent).join(" ")).toContain("mask-image:linear-gradient(to right,transparent,black min(24px,40%))");
+      fireEvent.click(rail);
+      expect(screen.getByRole("dialog", { name: "Freelance" })).toHaveTextContent("Built websites and web services");
+      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+      expect(rail).toHaveFocus();
+    }
   });
 
   it("exposes bounded keyboard-operable zoom and keeps the grid continuous through the label tail", () => {
@@ -106,14 +134,14 @@ describe("career timeline UI", () => {
     expect(zoom).toHaveValue("100");
     expect(within(career).getByText("100%")).toBeVisible();
     const lane = career.querySelector<HTMLElement>("[data-employer-id]")!;
-    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(710 * 48 / 276);
+    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(710 * 48 / 228);
     const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
     expect(rules.some((rule) => lane.classList.toString().split(" ").some((name) => rule.includes(`.${name}:before`) && rule.includes("calc(100% + 190px)") && rule.includes("pointer-events: none")))).toBe(true);
     fireEvent.change(zoom, { target: { value: "75" } });
     expect(zoom).toHaveValue("75");
     expect(within(career).getByText("75%")).toBeVisible();
     expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "485");
-    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(485 * 48 / 276);
+    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(485 * 48 / 228);
     expect(getComputedStyle(career.querySelector("[data-role-row]")!).height).toBe("24px");
     fireEvent.change(zoom, { target: { value: "250" } });
     expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "2060");
@@ -230,7 +258,7 @@ describe("career timeline UI", () => {
       for (const row of career.querySelectorAll("[data-role-row]")) {
         const label = row.querySelector<HTMLElement>("span")!;
         const end = Math.max(...Array.from(row.querySelectorAll<HTMLElement>("[data-role-rail]"), (rail) => Number(rail.dataset.endMonth)));
-        expect(parseFloat(label.style.left)).toBeCloseTo(end / 276 * 100);
+        expect(parseFloat(label.style.left)).toBeCloseTo(end / 228 * 100);
         expect(getComputedStyle(label).marginLeft).toBe("8px");
         expect(getComputedStyle(label).textAlign).toBe("left");
         expect(getComputedStyle(label).transform).toBe("translateY(-50%)");
