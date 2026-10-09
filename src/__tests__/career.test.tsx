@@ -92,6 +92,57 @@ describe("career timeline UI", () => {
     expect(axis.textContent).toContain("2028");
   });
 
+  it("exposes bounded keyboard-operable zoom and keeps the grid continuous through the label tail", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    expect(within(career).queryByText(/Timeline scrolls horizontally/)).not.toBeInTheDocument();
+    const zoom = within(career).getByRole("slider", { name: "Timeline zoom" });
+    expect(zoom).toHaveAttribute("min", "75");
+    expect(zoom).toHaveAttribute("max", "250");
+    expect(zoom).toHaveValue("100");
+    expect(within(career).getByText("100%")).toBeVisible();
+    const lane = career.querySelector<HTMLElement>("[data-employer-id]")!;
+    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(710 * 48 / 276);
+    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
+    expect(rules.some((rule) => lane.classList.toString().split(" ").some((name) => rule.includes(`.${name}:before`) && rule.includes("calc(100% + 190px)") && rule.includes("pointer-events: none")))).toBe(true);
+    fireEvent.change(zoom, { target: { value: "75" } });
+    expect(zoom).toHaveValue("75");
+    expect(within(career).getByText("75%")).toBeVisible();
+    expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "485");
+    expect(parseFloat(lane.style.getPropertyValue("--grid-period"))).toBeCloseTo(485 * 48 / 276);
+    expect(getComputedStyle(career.querySelector("[data-role-row]")!).height).toBe("24px");
+    fireEvent.change(zoom, { target: { value: "250" } });
+    expect(within(career).getByLabelText("Year axis")).toHaveAttribute("data-rail-width", "2060");
+  });
+
+  it("uses deterministic two-touch pinch zoom, cleans up cancelled gestures, and leaves one-finger scrolling alone", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const scroll = within(career).getByLabelText("Scrollable career timeline");
+    const touch = (clientX: number, clientY = 20) => ({ clientX, clientY, identifier: clientX });
+    fireEvent.touchStart(scroll, { touches: [touch(100), touch(123)] });
+    fireEvent.touchMove(scroll, { touches: [touch(100), touch(250)] });
+    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("100");
+    fireEvent.touchEnd(scroll, { touches: [] });
+    fireEvent.touchStart(scroll, { touches: [touch(100, 20), touch(140, 80)] });
+    fireEvent.touchMove(scroll, { touches: [touch(100, 20), touch(250, 80)] });
+    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("100");
+    fireEvent.touchEnd(scroll, { touches: [] });
+    fireEvent.touchStart(scroll, { touches: [touch(100), touch(200)] });
+    fireEvent.touchMove(scroll, { touches: [touch(100), touch(250)] });
+    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("150");
+    fireEvent.touchCancel(scroll, { touches: [] });
+    fireEvent.touchStart(scroll, { touches: [touch(100), touch(200)] });
+    fireEvent.touchMove(scroll, { touches: [touch(100), touch(100)] });
+    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("75");
+    fireEvent.touchEnd(scroll, { touches: [] });
+    fireEvent.click(career.querySelector('[data-role-rail="nitor_current"]')!);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.touchStart(scroll, { touches: [touch(100)] });
+    fireEvent.touchMove(scroll, { touches: [touch(100)] });
+    expect(within(career).getByRole("slider", { name: "Timeline zoom" })).toHaveValue("75");
+  });
+
   it("distinguishes employers with quiet typography instead of a colored badge", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
@@ -144,7 +195,7 @@ describe("career timeline UI", () => {
     const nitor = career.querySelector('[data-employer-id="nitor"]')!;
     const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
     const classes = Array.from(nitor.classList);
-    expect(rules.some((rule) => classes.some((name) => rule.includes(`.${name}:before`)))).toBe(false);
+    expect(rules.some((rule) => classes.some((name) => rule.includes(`.${name}:before`) && rule.includes("background: var(--domain-color)")))).toBe(false);
     expect(within(career).getByRole("button", { name: "Nitor details" })).toBeVisible();
     expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
