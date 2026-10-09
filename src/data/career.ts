@@ -77,8 +77,28 @@ export function getCareerLayout(data: CareerData) {
   });
   const assignmentById = new Map(baseAssignments.map(({ item }) => [item.id, item]));
   const assignments = baseAssignments.map((assignment) => ({ ...assignment, alongside: concurrency.filter((pair) => pair.includes(assignment.item.id)).flatMap((pair) => pair.filter((id) => id !== assignment.item.id).map((id) => assignmentById.get(id)!.role)) }));
+  const employers = data.employers.map((item) => {
+    const start = parseMonth(item.start);
+    const endExclusive = item.end ? inclusiveEndExclusive(item.end) : asOfEndExclusive(data.asOf);
+    const related = assignments.filter(({ item: assignment }) => assignment.employerId === item.id);
+    const domainIds = [...new Set(related.map(({ item: assignment }) => assignment.domainId))];
+    if (!domainIds.length) throw new Error(`Employer has no domain assignment: ${item.id}`);
+    if (domainIds.length > 1) throw new Error(`Employer has assignments in multiple domains: ${item.id}`);
+    const modes = [...new Set(related.flatMap(({ item: assignment }) => assignment.mode ? [assignment.mode] : []))].map((mode) => {
+      const intervals = related.filter(({ item: assignment }) => assignment.mode === mode).map(({ start: intervalStart, endExclusive: intervalEnd }) => ({ start: intervalStart, endExclusive: intervalEnd })).sort((a, b) => a.start - b.start);
+      const merged: { start: number; endExclusive: number }[] = [];
+      for (const interval of intervals) {
+        const last = merged.at(-1);
+        if (last && interval.start <= last.endExclusive) last.endExclusive = Math.max(last.endExclusive, interval.endExclusive);
+        else merged.push({ ...interval });
+      }
+      return { mode, intervals: merged };
+    });
+    return { item, start, endExclusive, domainId: domainIds[0], modes };
+  }).sort((a, b) => a.start - b.start);
   return {
     assignments,
+    employers,
     education: data.education.map((item) => {
       if (!item.start && !item.date) throw new Error(`Education date missing: ${item.id}`);
       const start = parseMonth(item.start ?? item.date!);
