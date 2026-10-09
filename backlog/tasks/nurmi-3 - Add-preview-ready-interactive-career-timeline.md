@@ -38,6 +38,7 @@ Owner-approved Career section after Recent work, implemented locally for review 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
+Historical pilot record: the checked criteria and original findings below describe that completed iteration, not the final UI. Later owner-directed revisions supersede criteria #3 and #4: independent Employers/Roles filters replace focus and education controls; Roles-only is the default; domains appear as line colors and a legend, not working-mode rows or top-level groups. All fourteen assignments remain in accessible date-free dialogs, while education history remains in source data only. The visible axis is 2008–2027 and fits mobile without horizontal scrolling. The owner subsequently authorized a branch push and PR for the completed timeline; production merge/publication still require separate approval.
 Source and exact-candidate browser acceptance passed independent review on 778d2d9a5b4462ca49fb8a7c30df8b63e19b88c2. Primary verified desktop, tablet and narrow mobile in both themes, all role and education dialogs, keyboard focus and reduced motion. Mechanical local closeout only; final same-card review of this metadata update is pending. Private preview exposure is operator-owned. Production has not been released.
 <!-- SECTION:NOTES:END -->
 

@@ -6,6 +6,11 @@ import { clampEmployerLabelLeft } from "../pages/CareerTimeline";
 
 afterEach(() => vi.restoreAllMocks());
 
+function renderCombinedCareer() {
+  render(<App />);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Employers" }));
+}
+
 describe("career data", () => {
   it("keeps the confirmed employers, assignments, education and concurrency", () => {
     expect(careerData.employers).toHaveLength(9);
@@ -55,11 +60,23 @@ describe("career data", () => {
 });
 
 describe("career timeline UI", () => {
+  it("defaults to roles only while allowing employers to be enabled", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const employers = within(career).getByRole("checkbox", { name: "Employers" });
+    expect(employers).not.toBeChecked();
+    expect(within(career).getByRole("checkbox", { name: "Roles" })).toBeChecked();
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+    expect(career.querySelectorAll("[data-employer-label], [data-employer-rail]")).toHaveLength(0);
+    fireEvent.click(employers);
+    expect(career.querySelectorAll("[data-employer-label]")).toHaveLength(9);
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+  });
   it("clamps a natural-width employer label at the canvas edge without truncating it", () => {
     expect(clampEmployerLabelLeft(94.736842, 320, 56)).toBeCloseTo(264);
     expect(clampEmployerLabelLeft(72, 320, 52)).toBeCloseTo(230.4);
     expect(clampEmployerLabelLeft(94.736842, 320, 380)).toBe(0);
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const combined = career.querySelector<HTMLElement>('[data-employer-id="nitor"] [data-employer-label]')!;
     expect(combined).toHaveStyle({ width: "max-content", maxWidth: "100%", whiteSpace: "nowrap" });
@@ -72,7 +89,7 @@ describe("career timeline UI", () => {
   });
 
   it("keeps role rails centered with compact rows and puts employer rails below their names", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const combinedRole = career.querySelector('[data-employer-id="nitor"] [data-role-row]')!;
     const combinedRail = combinedRole.querySelector<HTMLElement>("[data-role-rail]")!;
@@ -91,7 +108,7 @@ describe("career timeline UI", () => {
   });
 
   it("filters employers and roles independently while keeping shared rows and truthful role segments", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const employersFilter = within(career).getByRole("checkbox", { name: "Employers" });
     const rolesFilter = within(career).getByRole("checkbox", { name: "Roles" });
@@ -118,7 +135,7 @@ describe("career timeline UI", () => {
   });
 
   it("starts the shared axis at 2008 and crops earlier history without changing career facts", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const axis = within(career).getByLabelText("Year axis");
     expect(axis.querySelector("span")?.textContent).toBe("2008");
@@ -132,7 +149,7 @@ describe("career timeline UI", () => {
   });
 
   it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const employers = within(career).getByRole("checkbox", { name: "Employers" });
     const roles = within(career).getByRole("checkbox", { name: "Roles" });
@@ -158,7 +175,7 @@ describe("career timeline UI", () => {
   });
 
   it("fits the timeline to its container without native zoom or horizontal scrolling", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     expect(within(career).queryByRole("slider", { name: /zoom/i })).not.toBeInTheDocument();
     const scroll = within(career).getByLabelText("Career timeline");
@@ -172,7 +189,7 @@ describe("career timeline UI", () => {
   });
 
   it("distinguishes employers with quiet typography instead of a colored badge", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const heading = within(career).getByRole("button", { name: "Nitor details" });
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
@@ -195,7 +212,7 @@ describe("career timeline UI", () => {
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLElement) {
       return this.matches("button[data-employer-label]") ? 23 : 0;
     });
-    render(<App />);
+    renderCombinedCareer();
     const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
     expect(getComputedStyle(group).paddingTop).toBe("24px");
     expect(getComputedStyle(group.querySelector("button")!).minHeight).toBe("24px");
@@ -207,7 +224,7 @@ describe("career timeline UI", () => {
   });
 
   it("clamps employer headings inside their row while keeping the source start metadata", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
       expect(heading.style.left).toMatch(/px$/);
@@ -219,7 +236,7 @@ describe("career timeline UI", () => {
   });
 
   it("omits employer duration decoration only when roles are also shown", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const nitor = career.querySelector('[data-employer-id="nitor"]')!;
     const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
@@ -232,7 +249,7 @@ describe("career timeline UI", () => {
   });
 
   it("places employer-only rails below their names with a measured row height", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     for (const row of career.querySelectorAll<HTMLElement>('[data-row="employers"]')) {
@@ -248,7 +265,7 @@ describe("career timeline UI", () => {
   });
 
   it("places role labels on their approved side of the shared date axis", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const axis = within(career).getByLabelText("Year axis");
     expect(getComputedStyle(axis.parentElement!).getPropertyValue("--axis-left")).toBe("0px");
@@ -267,7 +284,7 @@ describe("career timeline UI", () => {
   });
 
   it("uses compact inline labels and identical employer-only and role-only row layouts", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     const roleRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
@@ -285,7 +302,7 @@ describe("career timeline UI", () => {
   });
 
   it("keeps employers visually secondary and role segments easy to activate", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const employer = within(career).getByRole("button", { name: "Nitor details" });
     const segment = career.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
@@ -297,7 +314,7 @@ describe("career timeline UI", () => {
   });
 
   it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const repeatedRows = Array.from(career.querySelectorAll<HTMLElement>('[data-role-row="Full-stack Developer"]'));
     expect(repeatedRows).toHaveLength(3);
@@ -311,7 +328,7 @@ describe("career timeline UI", () => {
   });
 
   it("uses a dedicated IT accent instead of the text color", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     expect(getComputedStyle(career).getPropertyValue("--career-it")).toBe("#55ccd1");
     const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
@@ -319,7 +336,7 @@ describe("career timeline UI", () => {
   });
 
   it("shows roles on one career timeline with domain colors instead of work modes", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     expect(within(career).queryByRole("heading", { name: "Marketing" })).not.toBeInTheDocument();
     expect(within(career).queryByRole("heading", { name: "Software & IT" })).not.toBeInTheDocument();
@@ -336,7 +353,7 @@ describe("career timeline UI", () => {
   });
 
   it("removes education and focus controls while retaining career placement and details", () => {
-    render(<App />);
+    renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const recent = screen.getByRole("heading", { name: "Recent work" }).closest("section")!;
     const contact = screen.getByRole("region", { name: "Contact" });
@@ -353,7 +370,7 @@ describe("career timeline UI", () => {
   });
 
   it("exposes all employer roles in one date-free dialog and restores focus after Escape", () => {
-    render(<App />);
+    renderCombinedCareer();
     const opener = screen.getByRole("button", { name: "Nitor details" });
     opener.focus();
     fireEvent.click(opener);
@@ -376,7 +393,7 @@ describe("career timeline UI", () => {
   });
 
   it("keeps all fourteen distinct role selectors and only confirmed concurrency links", () => {
-    render(<App />);
+    renderCombinedCareer();
     const roleIds = new Set<string>();
     for (const employerButton of screen.getAllByRole("button", { name: / details$/i })) {
       fireEvent.click(employerButton);

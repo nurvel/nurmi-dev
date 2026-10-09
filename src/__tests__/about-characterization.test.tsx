@@ -5,6 +5,13 @@ import About from "../pages/About";
 
 describe("approved one-page About page semantics", () => {
   beforeEach(() => render(<ThemeProvider theme={theme}><About /></ThemeProvider>));
+  it("shows the contact prompt without a divider above it", () => {
+    const contact = screen.getByRole("region", { name: "Contact" });
+    expect(within(contact).getByRole("heading", { level: 2 })).toHaveTextContent("Got a product or platform");
+    const classes = Array.from(contact.classList);
+    const rules = Array.from(document.styleSheets).flatMap(sheet => Array.from(sheet.cssRules, rule => rule.cssText));
+    expect(rules.some(rule => classes.some(name => rule.includes(`.${name}`)) && rule.includes("border-top"))).toBe(false);
+  });
   it("has a single hero heading and About/Recent work section headings", () => {
     expect(document.querySelectorAll("h1")).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 2, name: "About" })).toBeInTheDocument();

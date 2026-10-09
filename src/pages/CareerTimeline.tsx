@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { careerData, getCareerLayout, type Assignment } from "../data/career";
 
@@ -18,12 +18,11 @@ const EmployerLabel = styled.span`position:absolute;top:0;box-sizing:border-box;
 const CombinedEmployer = styled(Lane)`padding-top:24px;`;
 const EmployerHeading = styled.button`display:flex;align-items:flex-end;box-sizing:border-box;position:absolute;z-index:2;left:0;top:0;width:max-content;max-width:100%;min-height:24px;color:var(--career-employer);border-width:1px;border-style:solid;border-color:transparent;border-radius:4px;padding:0 4px;background:transparent;font:700 .75rem var(--font-display);font-weight:700;line-height:1.2;text-align:left;white-space:nowrap;cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);}`;
 const CombinedRole = styled.div`min-height:24px;position:relative;`;
-const CombinedRoleLabel = styled(RoleLabel)``;
-const CombinedSegment = styled(Segment)``;
 const Empty = styled.p`margin:12px 0;color:var(--color-text-secondary);font:400 .85rem var(--font-display);`;
 const Dialog = styled.dialog`width:min(620px,calc(100vw - 32px));max-height:min(82vh,740px);overflow:auto;border:1px solid var(--color-border);border-radius:12px;padding:24px;background:var(--color-background);color:var(--color-text-primary);box-shadow:0 20px 80px #0005;&::backdrop{background:#0008;}h3{font:600 1.3rem/1.25 var(--font-body);margin:0 0 8px;}p{font:400 .92rem/1.55 var(--font-body);color:var(--color-text-secondary);}button{min-height:44px;padding:8px 12px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-surface);color:var(--color-text-primary);cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px;}}`;
 const DialogRoles = styled.div`display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;button[aria-pressed="true"]{border-color:var(--color-accent);}`;
 const layout = getCareerLayout(careerData);
+const assignmentsByEmployer = new Map(layout.employers.map((employer)=>[employer.item.id,layout.assignments.filter(({item})=>item.employerId===employer.item.id)]));
 // The visible window is independent of the original career dates.
 const YEAR_START = 2008 * 12;
 const MONTH_COUNT = Math.ceil(Math.max(...layout.assignments.map(({endExclusive})=>endExclusive))/12)*12-YEAR_START;
@@ -40,18 +39,17 @@ function roleGroups(assignments:typeof layout.assignments){
 }
 
 export default function CareerTimeline(){
-  const [showEmployers,setShowEmployers]=useState(true);
+  const [showEmployers,setShowEmployers]=useState(false);
   const [showRoles,setShowRoles]=useState(true);
-  const [detail,setDetail]=useState<{title:string;employer?:string;institution?:string;description?:string;selectedRole?:string}|null>(null);
+  const [detail,setDetail]=useState<{title:string;employer:string;selectedRole:string}|null>(null);
   const canvasRef=useRef<HTMLDivElement>(null);
   const axisYears=[2008,2012,2016,2020,2024,2027];
   const dialogRef=useRef<HTMLDialogElement>(null);
   const openerRef=useRef<HTMLElement|null>(null);
-  const assignmentsByEmployer=useMemo(()=>new Map(layout.employers.map((employer)=>[employer.item.id,layout.assignments.filter(({item})=>item.employerId===employer.item.id)])),[]);
   const open=(value:NonNullable<typeof detail>,element:HTMLElement)=>{openerRef.current=element;setDetail(value);};
   const close=()=>setDetail(null);
   const activeRole=detail?.selectedRole?layout.assignments.find(({item})=>item.id===detail.selectedRole):undefined;
-  const roles=detail?.employer?layout.assignments.filter(({item})=>item.employerId===careerData.employers.find(({label})=>label===detail.employer)?.id):[];
+  const roles=activeRole?assignmentsByEmployer.get(activeRole.item.employerId)??[]:[];
   useEffect(()=>{
     const canvas=canvasRef.current;if(!canvas)return;
     const fitLabels=()=>{
@@ -120,14 +118,14 @@ export default function CareerTimeline(){
         const first=employerAssignments[0];
         return <CombinedEmployer key={employer.item.id} data-employer-id={employer.item.id} data-domain={employer.domainId} data-start-month={employer.start-YEAR_START} data-end-month={employer.endExclusive-YEAR_START} style={{"--domain-color":`var(--career-${employer.domainId})`,"--grid-period":`${48/MONTH_COUNT*100}%`} as React.CSSProperties}>
           <EmployerHeading data-employer-label type="button" aria-label={`${employer.item.label} details`} aria-describedby={`career-legend-${employer.domainId}`} style={{left:`${offset(employer.start)}%`}} onClick={(event)=>open(workDetail(first.item,employer.item.label),event.currentTarget)}>{employer.item.label}</EmployerHeading>
-          {roleGroups(employerAssignments).map(({role,items})=>{const start=Math.min(...items.map(({start})=>start));const end=Math.max(...items.map(({endExclusive})=>endExclusive));const leftLabel=employer.item.id==="twoday"||employer.item.id==="nitor"||role==="Head of R&D";return <CombinedRole key={role} data-role-row={role}><CombinedRoleLabel data-role-label data-label-side={leftLabel?"left":"right"} style={leftLabel?{left:0,width:`calc(${offset(start)}% - 8px)`,textAlign:"right",paddingRight:8}:{left:`calc(${offset(end)}% + 8px)`,width:`min(178px,calc(100% - ${offset(end)}% - 8px))`}}>{role}</CombinedRoleLabel>{items.map(({item,start,endExclusive})=><CombinedSegment key={item.id} type="button" data-role-rail={item.id} data-continues-before={start<YEAR_START||undefined} aria-description={start<YEAR_START?"Continues from before the visible timeline.":undefined} data-start-month={start-YEAR_START} data-end-month={endExclusive-YEAR_START} style={{"--domain-color":`var(--career-${item.domainId})`} as React.CSSProperties} $left={offset(start)} $width={percentWidth(start,endExclusive)} aria-label={`${role} at ${employer.item.label}`} aria-describedby={`career-legend-${employer.domainId}`} onClick={(event)=>open(workDetail(item,employer.item.label),event.currentTarget)}/>)}</CombinedRole>;})}
+          {roleGroups(employerAssignments).map(({role,items})=>{const start=Math.min(...items.map(({start})=>start));const end=Math.max(...items.map(({endExclusive})=>endExclusive));const leftLabel=employer.item.id==="twoday"||employer.item.id==="nitor"||role==="Head of R&D";return <CombinedRole key={role} data-role-row={role}><RoleLabel data-role-label data-label-side={leftLabel?"left":"right"} style={leftLabel?{left:0,width:`calc(${offset(start)}% - 8px)`,textAlign:"right",paddingRight:8}:{left:`calc(${offset(end)}% + 8px)`,width:`min(178px,calc(100% - ${offset(end)}% - 8px))`}}>{role}</RoleLabel>{items.map(({item,start,endExclusive})=><Segment key={item.id} type="button" data-role-rail={item.id} data-continues-before={start<YEAR_START||undefined} aria-description={start<YEAR_START?"Continues from before the visible timeline.":undefined} data-start-month={start-YEAR_START} data-end-month={endExclusive-YEAR_START} style={{"--domain-color":`var(--career-${item.domainId})`} as React.CSSProperties} $left={offset(start)} $width={percentWidth(start,endExclusive)} aria-label={`${role} at ${employer.item.label}`} aria-describedby={`career-legend-${employer.domainId}`} onClick={(event)=>open(workDetail(item,employer.item.label),event.currentTarget)}/>)}</CombinedRole>;})}
         </CombinedEmployer>;
       })}
     </Canvas></Scroll>
     <Dialog ref={dialogRef} aria-labelledby="career-dialog-title" aria-describedby="career-dialog-description" onCancel={(event)=>{event.preventDefault();close();}} onKeyDown={trapFocus}>
-      {detail&&<><h3 id="career-dialog-title">{detail.title}</h3>{activeRole&&<p><strong>{activeRole.item.role}</strong></p>}{(detail.employer||detail.institution)&&<p>{detail.employer??detail.institution}</p>}
+      {detail&&<><h3 id="career-dialog-title">{detail.title}</h3>{activeRole&&<p><strong>{activeRole.item.role}</strong></p>}<p>{detail.employer}</p>
         {detail.employer&&<DialogRoles aria-label="Employer roles">{roles.map(({item})=><button key={item.id} type="button" data-role-id={item.id} aria-label={`${item.role} — ${item.focusDetail}`} aria-pressed={item.id===detail.selectedRole} onClick={()=>setDetail({...detail,selectedRole:item.id})}>{item.role}<small> · {item.focusDetail}</small></button>)}</DialogRoles>}
-        <p id="career-dialog-description">{activeRole?.item.description??detail.description}</p>
+        <p id="career-dialog-description">{activeRole?.item.description}</p>
         {activeRole&&<p><strong>Focus:</strong> {activeRole.item.focusDetail}</p>}
         {activeRole?.alongside.length? <p>Alongside {activeRole.alongside.join(", ")}</p>:null}
         <button type="button" onClick={close}>Close</button></>}
