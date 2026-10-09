@@ -54,7 +54,24 @@ describe("career data", () => {
 });
 
 describe("career timeline UI", () => {
-  it("groups employers by domain with focus hidden and education separately disclosed", () => {
+  it("shows roles on one career timeline with domain colors instead of work modes", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    expect(within(career).queryByRole("heading", { name: "Marketing" })).not.toBeInTheDocument();
+    expect(within(career).queryByRole("heading", { name: "Software & IT" })).not.toBeInTheDocument();
+    const legend = within(career).getByLabelText("Career line colors");
+    expect(legend).toHaveTextContent("Marketing");
+    expect(legend).toHaveTextContent("Software & IT");
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+    expect(within(career).queryByText(/^(In-house|Consulting)$/)).not.toBeInTheDocument();
+    expect(career.querySelector('[data-role-rail="nitor_current"]')?.parentElement).toHaveTextContent("Full-stack Developer");
+    const employers = Array.from(career.querySelectorAll<HTMLElement>("[data-employer-id]"));
+    expect(employers.map((e) => e.dataset.employerId)).toEqual(["freelance", "seed", "ace_chubb", "voitto", "kpmg", "solidabis", "saashop", "twoday", "nitor"]);
+    expect(career.querySelector('[data-employer-id="seed"]')).toHaveAttribute("data-domain", "marketing");
+    expect(career.querySelector('[data-employer-id="nitor"]')).toHaveAttribute("data-domain", "it");
+  });
+
+  it("keeps focus hidden and education separately disclosed", () => {
     render(<App />);
     const recent = screen.getByRole("heading", { name: "Recent work" }).closest("section")!;
     const career = screen.getByRole("region", { name: "Career" });
@@ -62,15 +79,14 @@ describe("career timeline UI", () => {
     expect(recent.compareDocumentPosition(career) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(career.compareDocumentPosition(contact) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(career).getAllByRole("button", { name: / details$/i })).toHaveLength(9);
-    expect(within(career).getByRole("heading", { name: "Marketing" })).toBeVisible();
-    expect(within(career).getByRole("heading", { name: "Software & IT" })).toBeVisible();
+
     expect(within(career).getByRole("button", { name: "Freelance details" })).toBeInTheDocument();
     expect(within(career).queryByText(/VR LOGISTICS|HSL|Aidon|Capgemini/i)).not.toBeInTheDocument();
     const focus = within(career).getByRole("checkbox", { name: "Areas of focus" });
     expect(focus).not.toBeChecked();
     expect(within(career).queryByText("Web services")).not.toBeInTheDocument();
     const laneHeights = Array.from(career.querySelectorAll(".sc-lanes"), (lane) => getComputedStyle(lane).height);
-    const modeCount = career.querySelectorAll("[data-mode]").length;
+    const roleCount = career.querySelectorAll("[data-role-rail]").length;
     expect(within(career).getByLabelText("Year axis").textContent).toBe("200120062011201620212026");
     fireEvent.click(focus);
     expect(within(career).getByText("Web services")).toBeVisible();
@@ -78,7 +94,7 @@ describe("career timeline UI", () => {
     expect(within(career.querySelector(".sc-focus-summary")!).getByText(/Freelance:/).closest("p")).toHaveTextContent("Web services");
     expect(career.querySelector('[data-employer-id="freelance"]')).not.toContainElement(within(career).getByText("Web services"));
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
-    expect(career.querySelectorAll("[data-mode]")).toHaveLength(modeCount);
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(roleCount);
     const education = within(career).getByRole("button", { name: /Education & certificates/ });
     expect(education).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(education);
@@ -89,9 +105,9 @@ describe("career timeline UI", () => {
     expect(within(career).getByRole("button", { name: "Education detail: Data Analytics" })).toHaveAttribute("data-kind", "point");
     expect(within(career).getAllByRole("button", { name: / details$/i })).toHaveLength(9);
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
-    expect(career.querySelectorAll('[data-mode="consultant"]')).toHaveLength(5);
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
     const nitor = career.querySelector('[data-employer-id="nitor"]');
-    expect(nitor?.querySelector("[data-mode]")).toBeNull();
+    expect(nitor?.querySelector("[data-role-rail]")).toHaveAttribute("data-role-rail", "nitor_current");
     expect(nitor).toHaveAttribute("data-end-month");
     expect(Number(nitor?.getAttribute("data-end-month"))).toBeCloseTo(25 * 12 + 9 + 7 / 31);
     education.focus();
