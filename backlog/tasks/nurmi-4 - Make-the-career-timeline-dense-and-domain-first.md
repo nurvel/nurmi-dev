@@ -1,10 +1,10 @@
 ---
 id: NURMI-4
 title: Make the career timeline dense and domain-first
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-09 04:44'
-updated_date: '2026-10-09 04:54'
+updated_date: '2026-10-09 05:14'
 labels: []
 dependencies: []
 type: enhancement
@@ -24,5 +24,11 @@ Owner-approved iteration of the local Career preview. Use Marketing and Software
 - [x] #3 Focus is hidden by default and can be enabled. Education opens as a separate collapsed click disclosure with all ten education items and correct interval-versus-point representation.
 - [x] #4 All fourteen distinct assignments and their descriptions remain discoverable through employer details. Native dialogs preserve accessible name/description, close/Escape, focus containment and return, including role changes and education disclosure.
 - [x] #5 Preserve confirmed dates, inclusive ends, ongoing asOf cutoff, only three explicit concurrent pairs, English copy, existing site/themes/content, no Career clients/Capgemini and date-free labels/dialogs with years on axes only.
-- [ ] #6 Fresh tests, build, preview parity and diff checks pass; primary verifies dense geometry, labels, both themes, desktop/tablet/320px, toggles/disclosure and all dialogs on the exact candidate. Independent same-card review passes before operator updates only the private preview.
+- [x] #6 Fresh tests, build, preview parity and diff checks pass; primary verifies dense geometry, labels, both themes, desktop/tablet/320px, toggles/disclosure and all dialogs on the exact candidate. Independent same-card review passes before operator updates only the private preview.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented and independently source-reviewed the dense domain-first Career layout. Exact application candidate 531551bd3a501b75b0c24c821371c96f1d227751 passed primary browser checks across both themes and four widths: nine employers, fourteen role details and ten education details, collision-safe truthful intervals, keyboard dialogs and disclosures. Local feature branch/private-preview scope only; no main merge, remote push or production publication. Final metadata-only successor requires same-lane reviewer confirmation before the operator swaps the private preview.
+<!-- SECTION:NOTES:END -->
