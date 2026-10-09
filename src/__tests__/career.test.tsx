@@ -142,7 +142,7 @@ describe("career timeline UI", () => {
         expect(getComputedStyle(label).marginLeft).toBe("8px");
         expect(getComputedStyle(label).textAlign).toBe("left");
         expect(getComputedStyle(label).transform).toBe("translateY(-50%)");
-        expect(getComputedStyle(row).height).toBe(both ? "54px" : "32px");
+        expect(getComputedStyle(row).height).toBe("32px");
       }
     }
   });
@@ -189,6 +189,14 @@ describe("career timeline UI", () => {
     const nitorSegment = sharedRow.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
     fireEvent.click(nitorSegment);
     expect(screen.getByRole("dialog", { name: "Nitor" })).toHaveTextContent("Full-stack development with a focus on architecture and AI.");
+  });
+
+  it("uses a dedicated IT accent instead of the text color", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    expect(getComputedStyle(career).getPropertyValue("--career-it")).toBe("#55ccd1");
+    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
+    expect(rules.some((rule) => rule.includes('html[data-theme="light"]') && rule.includes("--career-it: #087e8b"))).toBe(true);
   });
 
   it("shows roles on one career timeline with domain colors instead of work modes", () => {
