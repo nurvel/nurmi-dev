@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { careerData, getCareerLayout, type Assignment } from "../data/career";
 
-const Section = styled.section`--career-marketing:var(--color-accent);--career-it:#55ccd1;--career-employer:#b9a3ef;html[data-theme="light"] &{--career-it:#087e8b;--career-employer:#68439f;}width:100%;padding:48px 0 0;color:var(--color-text-primary);`;
+const Section = styled.section`--career-marketing:var(--color-accent);--career-it:#55ccd1;--career-employer:var(--color-text-secondary);html[data-theme="light"] &{--career-it:#087e8b;}width:100%;padding:48px 0 0;color:var(--color-text-primary);`;
 const Head = styled.div`display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--color-border);padding-bottom:12px;margin-bottom:12px;`;
 const Title = styled.h2`font:500 .75rem var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
 const Controls = styled.div`display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 8px;font:400 .8125rem var(--font-display);color:var(--color-text-secondary);label{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;}input{accent-color:var(--color-accent);width:18px;height:18px;}`;
@@ -15,9 +15,9 @@ const Lane = styled.div`position:relative;margin-left:var(--axis-left);border-bo
 const RoleLane = styled(Lane)`height:24px;&[data-row="employers"]{height:28px;}`;
 const RoleLabel = styled.span`position:absolute;width:178px;margin-left:8px;top:12.5px;transform:translateY(-50%);white-space:normal;text-align:left;color:var(--color-text-primary);font:500 .7rem var(--font-display);line-height:12px;`;
 const Segment = styled.button<{ $left:number; $width:number }>`position:absolute;left:${({$left})=>$left}%;width:max(3px,${({$width})=>$width}%);top:0;height:24px;border:0;padding:0;background:transparent;cursor:pointer;&:after{content:"";position:absolute;left:0;top:10px;width:100%;height:5px;border-radius:3px;background:var(--domain-color);pointer-events:none;}&[data-employer-rail]:after{top:18px;}&:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px;}`;
-const EmployerLabel = styled.span`position:absolute;top:0;transform:none;color:var(--career-employer);border-width:1px;border-style:solid;border-color:var(--career-employer);border-radius:4px;padding:0 4px;background:var(--color-surface);font:500 .64rem var(--font-display);font-size:.64rem;line-height:12px;white-space:nowrap;`;
+const EmployerLabel = styled.span`position:absolute;top:0;transform:none;color:var(--career-employer);border-width:1px;border-style:solid;border-color:transparent;border-radius:4px;padding:0 4px;background:transparent;font:600 .64rem var(--font-display);font-weight:600;font-size:.64rem;line-height:12px;white-space:nowrap;`;
 const CombinedEmployer = styled(Lane)`padding-top:24px;`;
-const EmployerHeading = styled.button`position:absolute;width:max-content;z-index:2;left:0;top:0;min-height:24px;color:var(--career-employer);border-width:1px;border-style:solid;border-color:var(--career-employer);border-radius:4px;padding:0 4px;background:var(--color-surface);font:500 .64rem var(--font-display);font-size:.64rem;line-height:12px;text-align:left;overflow-wrap:anywhere;cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);}`;
+const EmployerHeading = styled.button`position:absolute;width:max-content;z-index:2;left:0;top:0;min-height:24px;color:var(--career-employer);border-width:1px;border-style:solid;border-color:transparent;border-radius:4px;padding:0 4px;background:transparent;font:600 .64rem var(--font-display);font-weight:600;font-size:.64rem;line-height:12px;text-align:left;overflow-wrap:anywhere;cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);}`;
 const CombinedRole = styled.div`height:24px;position:relative;`;
 const CombinedRoleLabel = styled(RoleLabel)`font-size:.72rem;`;
 const CombinedSegment = styled(Segment)``;
