@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import App from "../App";
 import { careerData, getCareerLayout, parseMonth } from "../data/career";
+import { clampEmployerLabelLeft } from "../pages/CareerTimeline";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -54,6 +55,40 @@ describe("career data", () => {
 });
 
 describe("career timeline UI", () => {
+  it("clamps a natural-width employer label at the canvas edge without truncating it", () => {
+    expect(clampEmployerLabelLeft(94.736842, 320, 56)).toBeCloseTo(264);
+    expect(clampEmployerLabelLeft(72, 320, 52)).toBeCloseTo(230.4);
+    expect(clampEmployerLabelLeft(94.736842, 320, 380)).toBe(0);
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const combined = career.querySelector<HTMLElement>('[data-employer-id="nitor"] [data-employer-label]')!;
+    expect(combined).toHaveStyle({ width: "max-content", maxWidth: "100%", whiteSpace: "nowrap" });
+    expect(combined.style.left).toMatch(/px$/);
+    expect(combined.closest("[data-employer-id]")).toHaveAttribute("data-start-month");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    const employerOnly = career.querySelector<HTMLElement>('[data-employer-id="nitor"] [data-employer-label]')!;
+    expect(employerOnly).toHaveStyle({ width: "max-content", maxWidth: "100%", whiteSpace: "nowrap" });
+    expect(employerOnly.style.left).toMatch(/px$/);
+  });
+
+  it("keeps role rails centered with compact rows and puts employer rails below their names", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const combinedRole = career.querySelector('[data-employer-id="nitor"] [data-role-row]')!;
+    const combinedRail = combinedRole.querySelector<HTMLElement>("[data-role-rail]")!;
+    expect(getComputedStyle(combinedRole).minHeight).toBe("24px");
+    expect(getComputedStyle(combinedRole.querySelector("span")!).top).toBe("50%");
+    expect(getComputedStyle(combinedRail).top).toBe("50%");
+    expect(getComputedStyle(combinedRail).transform).toBe("translateY(-50%)");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    for (const row of career.querySelectorAll<HTMLElement>('[data-row="employers"]')) {
+      const label = row.querySelector<HTMLElement>("[data-employer-label]")!;
+      const rail = row.querySelector<HTMLElement>("[data-employer-rail]")!;
+      expect(parseFloat(rail.style.top)).toBeGreaterThanOrEqual(label.offsetHeight + 4);
+      expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
+    }
+  });
+
   it("filters employers and roles independently while keeping shared rows and truthful role segments", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
@@ -140,7 +175,7 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     const heading = within(career).getByRole("button", { name: "Nitor details" });
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
-    expect(heading.style.width).toContain("calc(");
+    expect(heading).toHaveStyle({ width: "max-content", maxWidth: "100%", whiteSpace: "nowrap" });
     expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
     expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("#b3abbf");
     expect(getComputedStyle(heading).borderTopColor).toBe("rgba(0, 0, 0, 0)");
@@ -166,17 +201,15 @@ describe("career timeline UI", () => {
     expect(firstLabel).toHaveAttribute("data-label-side", "left");
   });
 
-  it("aligns employer headings with the first role segment instead of the end of late intervals", () => {
+  it("clamps employer headings inside their row while keeping the source start metadata", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
     for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
-      const segments = Array.from(heading.parentElement!.querySelectorAll<HTMLElement>("[data-role-rail]"));
-      const start = Math.min(...segments.map((segment) => parseFloat(getComputedStyle(segment).left)));
-      expect(parseFloat(heading.style.left)).toBeCloseTo(start);
-      expect(heading.style.transform).toBe("");
-    }
-    for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
-      expect(heading.style.width).toContain("calc(");
+      expect(heading.style.left).toMatch(/px$/);
+      expect(getComputedStyle(heading).width).toBe("max-content");
+      expect(getComputedStyle(heading).maxWidth).toBe("100%");
+      expect(getComputedStyle(heading).whiteSpace).toBe("nowrap");
+      expect(heading.parentElement).toHaveAttribute("data-start-month");
     }
   });
 
@@ -193,17 +226,18 @@ describe("career timeline UI", () => {
     expect(career.querySelectorAll("[data-employer-rail]")).toHaveLength(9);
   });
 
-  it("places employer-only names above their rails without changing row height", () => {
+  it("places employer-only rails below their names with a measured row height", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
-    for (const row of career.querySelectorAll('[data-row="employers"]')) {
-      const label = row.querySelector<HTMLElement>("span")!;
+    for (const row of career.querySelectorAll<HTMLElement>('[data-row="employers"]')) {
+      const label = row.querySelector<HTMLElement>("[data-employer-label]")!;
       const rail = row.querySelector<HTMLElement>("[data-employer-rail]")!;
-      expect(parseFloat(getComputedStyle(label).left)).toBeCloseTo(parseFloat(getComputedStyle(rail).left));
+      expect(label.style.left).toMatch(/px$/);
       expect(getComputedStyle(label).top).toBe("0px");
       expect(getComputedStyle(label).transform).toBe("none");
-      expect(getComputedStyle(row).minHeight).toBe("44px");
+      expect(parseFloat(rail.style.top)).toBeGreaterThanOrEqual(label.offsetHeight + 4);
+      expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
     }
   });
 
@@ -229,14 +263,14 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     const roleRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
-    expect(getComputedStyle(roleRow).minHeight).toBe("40px");
+    expect(getComputedStyle(roleRow).minHeight).toBe("24px");
     expect(getComputedStyle(roleRow.querySelector("span")!).transform).toBe("translateY(-50%)");
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     const employerRows = career.querySelectorAll('[data-row="employers"]');
     expect(employerRows).toHaveLength(9);
     employerRows.forEach((row) => {
-      expect(getComputedStyle(row).minHeight).toBe("44px");
+      expect(parseFloat(getComputedStyle(row).minHeight)).toBeGreaterThanOrEqual(48);
       expect(row.querySelectorAll("button")).toHaveLength(1);
     });
   });
@@ -355,6 +389,4 @@ describe("career timeline UI", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: /^Team Lead/ }));
     expect(within(dialog).getByText("Alongside Full-stack Developer, Technical Product Owner")).toBeVisible();
   });
-
-
 });
