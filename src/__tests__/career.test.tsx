@@ -101,6 +101,7 @@ describe("career timeline UI", () => {
     expect(scroll.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(getComputedStyle(scroll).touchAction).toBe("pan-x pan-y");
     expect(zoom).toHaveAttribute("min", "75");
+    expect([...document.querySelectorAll("style")].map(s=>s.textContent).join(" ")).toContain("width:min(260px,35vw)");
     expect(zoom).toHaveAttribute("max", "250");
     expect(zoom).toHaveValue("100");
     expect(within(career).getByText("100%")).toBeVisible();
