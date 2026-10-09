@@ -81,6 +81,19 @@ describe("career timeline UI", () => {
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
+  it("omits employer duration decoration only when roles are also shown", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const nitor = career.querySelector('[data-employer-id="nitor"]')!;
+    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
+    const classes = Array.from(nitor.classList);
+    expect(rules.some((rule) => classes.some((name) => rule.includes(`.${name}:before`)))).toBe(false);
+    expect(within(career).getByRole("button", { name: "Nitor details" })).toBeVisible();
+    expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    expect(career.querySelectorAll("[data-employer-rail]")).toHaveLength(9);
+  });
+
   it("uses compact inline labels and identical employer-only and role-only row layouts", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
