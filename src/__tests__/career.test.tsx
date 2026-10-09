@@ -81,6 +81,26 @@ describe("career timeline UI", () => {
     expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
+  it("keeps the employer heading close to its role rows", () => {
+    render(<App />);
+    const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
+    expect(getComputedStyle(group).paddingTop).toBe("24px");
+  });
+
+  it("aligns employer headings with the first role segment instead of the end of late intervals", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
+      const segments = Array.from(heading.parentElement!.querySelectorAll<HTMLElement>("[data-role-rail]"));
+      const start = Math.min(...segments.map((segment) => parseFloat(getComputedStyle(segment).left)));
+      expect(parseFloat(heading.style.left)).toBeCloseTo(start);
+      expect(heading.style.transform).toBe("none");
+    }
+    for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
+      expect(parseFloat(heading.style.maxWidth)).toBeCloseTo(100 - parseFloat(heading.style.left));
+    }
+  });
+
   it("omits employer duration decoration only when roles are also shown", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });

@@ -15,8 +15,8 @@ const Lane = styled.div`position:relative;margin-left:var(--axis-left);border-bo
 const RoleLane = styled(Lane)`height:32px;`;
 const RoleLabel = styled.span`position:absolute;left:-190px;width:178px;top:16.5px;transform:translateY(-50%);white-space:nowrap;text-align:right;color:var(--color-text-primary);font:500 .7rem var(--font-display);`;
 const Segment = styled.button<{ $left:number; $width:number }>`position:absolute;left:${({$left})=>$left}%;width:max(3px,${({$width})=>$width}%);top:4px;height:24px;border:0;padding:0;background:transparent;cursor:pointer;&:after{content:"";position:absolute;left:0;top:10px;width:100%;height:5px;border-radius:3px;background:var(--domain-color);pointer-events:none;}&:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px;}`;
-const CombinedEmployer = styled(Lane)`padding-top:44px;`;
-const EmployerHeading = styled.button`position:absolute;z-index:2;left:0;top:0;min-height:24px;border:0;padding:2px 4px;background:var(--color-background);color:var(--color-text-primary);font:500 .64rem var(--font-display);font-size:.64rem;cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);}`;
+const CombinedEmployer = styled(Lane)`padding-top:24px;`;
+const EmployerHeading = styled.button`position:absolute;z-index:2;left:0;top:0;min-height:24px;border:0;padding:0;background:var(--color-background);color:var(--color-text-primary);font:500 .64rem var(--font-display);font-size:.64rem;line-height:12px;text-align:left;overflow-wrap:anywhere;cursor:pointer;&:focus-visible{outline:3px solid var(--color-focus);}`;
 const CombinedRole = styled.div`height:54px;position:relative;`;
 const CombinedRoleLabel = styled(RoleLabel)`font-size:.72rem;`;
 const CombinedSegment = styled(Segment)``;
@@ -91,7 +91,7 @@ export default function CareerTimeline(){
         const employerAssignments=assignmentsByEmployer.get(employer.item.id)!;
         const first=employerAssignments[0];
         return <CombinedEmployer key={employer.item.id} data-employer-id={employer.item.id} data-domain={employer.domainId} data-start-month={employer.start-YEAR_START} data-end-month={employer.endExclusive-YEAR_START} style={{"--domain-color":`var(--career-${employer.domainId})`} as React.CSSProperties}>
-          <EmployerHeading type="button" aria-label={`${employer.item.label} details`} aria-describedby={`career-legend-${employer.domainId}`} style={{left:`${offset(employer.start)>70?offset(employer.endExclusive):offset(employer.start)}%`,transform:offset(employer.start)>70?"translateX(-100%)":"none"}} onClick={(event)=>open(workDetail(first.item,employer.item.label),event.currentTarget)}>{employer.item.label}</EmployerHeading>
+          <EmployerHeading type="button" aria-label={`${employer.item.label} details`} aria-describedby={`career-legend-${employer.domainId}`} style={{left:`${offset(employer.start)}%`,transform:"none",maxWidth:`${100-offset(employer.start)}%`}} onClick={(event)=>open(workDetail(first.item,employer.item.label),event.currentTarget)}>{employer.item.label}</EmployerHeading>
           {roleGroups(employerAssignments).map(({role,items})=><CombinedRole key={role} data-role-row={role}><CombinedRoleLabel>{role}</CombinedRoleLabel>{items.map(({item,start,endExclusive})=><CombinedSegment key={item.id} type="button" data-role-rail={item.id} data-start-month={start-YEAR_START} data-end-month={endExclusive-YEAR_START} $left={offset(start)} $width={percentWidth(start,endExclusive)} style={{"--domain-color":`var(--career-${item.domainId})`} as React.CSSProperties} aria-label={`${role} at ${employer.item.label}`} aria-describedby={`career-legend-${item.domainId}`} onClick={(event)=>open(workDetail(item,employer.item.label),event.currentTarget)}/>)}</CombinedRole>)}
         </CombinedEmployer>;
       })}
