@@ -32,20 +32,31 @@ function percentWidth(start:number,endExclusive:number):number{return Math.max(0
 function workDetail(item:Assignment,employer:string){return {title:employer,employer,selectedRole:item.id};}
 function educationDetail(item:Education){return {title:item.label,institution:item.institution,description:item.type==="certificate"?"Professional certification.":item.type==="training"?"Professional training.":item.type==="studies"?"University studies.":"Education."};}
 const modeLabels:Record<string,string>={consultant:"Consulting",inhouse:"In-house",freelance:"Freelance"};
+const MODE_LABEL_FOOTPRINT_PX=64;
 
 export default function CareerTimeline(){
   const [showFocus,setShowFocus]=useState(false);
   const [showEducation,setShowEducation]=useState(false);
+  const [timelineWidth,setTimelineWidth]=useState(32*MONTH_COUNT/MODE_LABEL_FOOTPRINT_PX);
   const [detail,setDetail]=useState<{title:string;employer?:string;institution?:string;description?:string;selectedRole?:string}|null>(null);
   const dialogRef=useRef<HTMLDialogElement>(null);
+  const timelineRef=useRef<HTMLDivElement>(null);
   const openerRef=useRef<HTMLElement|null>(null);
+  useEffect(()=>{
+    const timeline=timelineRef.current;
+    if(!timeline||typeof ResizeObserver==="undefined")return;
+    const observer=new ResizeObserver(([entry])=>setTimelineWidth(entry.contentRect.width));
+    observer.observe(timeline);
+    return ()=>observer.disconnect();
+  },[]);
   const employerGroups=useMemo(()=>careerData.domains.map((domain)=>{
     const employers=layout.employers.filter((employer)=>employer.domainId===domain.id);
     const laneIntervals:{start:number;end:number}[][]=[];
     const packed=employers.map((employer)=>{
       const labelSpace=Math.ceil(employer.item.label.length*2.25);
       const alignEnd=offset(employer.start)>82;
-      const modeLabelSpace=16;
+      const railWidth=Math.max(1,timelineWidth-104);
+      const modeLabelSpace=Math.ceil((MODE_LABEL_FOOTPRINT_PX/railWidth)*MONTH_COUNT);
       const modeLabelStarts=employer.modes.flatMap(({intervals})=>intervals.map(({start})=>start-modeLabelSpace));
       const occupiedStart=Math.max(YEAR_START,Math.min(alignEnd?employer.endExclusive-labelSpace:employer.start,...modeLabelStarts));
       const occupiedEnd=alignEnd?employer.endExclusive:Math.max(employer.endExclusive,employer.start+labelSpace);
@@ -56,7 +67,7 @@ export default function CareerTimeline(){
       return {...employer,lane,alignEnd};
     });
     return {domain,employers:packed,laneCount:laneIntervals.length};
-  }),[]);
+  }),[timelineWidth]);
   const activeRole=detail?.selectedRole?layout.assignments.find(({item})=>item.id===detail.selectedRole):undefined;
   useEffect(()=>{
     const dialog=dialogRef.current;if(!dialog)return;
@@ -76,9 +87,9 @@ export default function CareerTimeline(){
   const roles=detail?.employer?layout.assignments.filter(({item})=>item.employerId===careerData.employers.find(({label})=>label===detail.employer)?.id):[];
   return <Section aria-label="Career"><Head><Title>Career</Title></Head>
     <Controls><label><input type="checkbox" checked={showFocus} onChange={(event)=>setShowFocus(event.target.checked)}/>Areas of focus</label></Controls>
-    <MobileTimeline><Timeline><Axis aria-label="Year axis">{Array.from({length:6},(_,i)=>2001+i*5).map((year)=><span key={year} style={{left:`${offset(year*12)}%`}}>{year}</span>)}</Axis>
+    <MobileTimeline><Timeline ref={timelineRef}><Axis aria-label="Year axis">{Array.from({length:6},(_,i)=>2001+i*5).map((year)=><span key={year} style={{left:`${offset(year*12)}%`}}>{year}</span>)}</Axis>
       {employerGroups.map(({domain,employers,laneCount})=><Group key={domain.id} aria-labelledby={`career-domain-${domain.id}`}><h3 id={`career-domain-${domain.id}`}>{domain.label}</h3>
-        <Lanes $height={Math.max(82,laneCount*(showFocus?112:88))}>{employers.map((employer)=>{
+        <Lanes $height={Math.max(82,laneCount*88)}>{employers.map((employer)=>{
           const blockWidth=percentWidth(employer.start,employer.endExclusive);
           const roles=layout.assignments.filter(({item})=>item.employerId===employer.item.id);
           const focus=[...new Set(roles.map(({item})=>item.focusDetail))];

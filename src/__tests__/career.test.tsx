@@ -69,10 +69,12 @@ describe("career timeline UI", () => {
     const focus = within(career).getByRole("checkbox", { name: "Areas of focus" });
     expect(focus).not.toBeChecked();
     expect(within(career).queryByText("Web services")).not.toBeInTheDocument();
+    const laneHeights = Array.from(career.querySelectorAll(".sc-lanes"), (lane) => getComputedStyle(lane).height);
     const modeCount = career.querySelectorAll("[data-mode]").length;
     expect(within(career).getByLabelText("Year axis").textContent).toBe("200120062011201620212026");
     fireEvent.click(focus);
     expect(within(career).getByText("Web services")).toBeVisible();
+    expect(Array.from(career.querySelectorAll(".sc-lanes"), (lane) => getComputedStyle(lane).height)).toEqual(laneHeights);
     expect(within(career.querySelector(".sc-focus-summary")!).getByText(/Freelance:/).closest("p")).toHaveTextContent("Web services");
     expect(career.querySelector('[data-employer-id="freelance"]')).not.toContainElement(within(career).getByText("Web services"));
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
