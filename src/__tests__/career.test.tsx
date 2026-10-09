@@ -114,6 +114,39 @@ describe("career timeline UI", () => {
     expect(career.querySelectorAll("[data-employer-rail]")).toHaveLength(9);
   });
 
+  it("places employer-only names above their rails without changing row height", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
+    for (const row of career.querySelectorAll('[data-row="employers"]')) {
+      const label = row.querySelector<HTMLElement>("span")!;
+      const rail = row.querySelector<HTMLElement>("[data-employer-rail]")!;
+      expect(parseFloat(getComputedStyle(label).left)).toBeCloseTo(parseFloat(getComputedStyle(rail).left));
+      expect(getComputedStyle(label).top).toBe("0px");
+      expect(getComputedStyle(label).transform).toBe("none");
+      expect(getComputedStyle(row).height).toBe("32px");
+    }
+  });
+
+  it("puts each grouped role name just after its last rail with no left label gutter", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const axis = within(career).getByLabelText("Year axis");
+    expect(getComputedStyle(axis.parentElement!).getPropertyValue("--axis-left")).toBe("0px");
+    for (const both of [true, false]) {
+      if (!both) fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+      for (const row of career.querySelectorAll("[data-role-row]")) {
+        const label = row.querySelector<HTMLElement>("span")!;
+        const end = Math.max(...Array.from(row.querySelectorAll<HTMLElement>("[data-role-rail]"), (rail) => Number(rail.dataset.endMonth)));
+        expect(parseFloat(label.style.left)).toBeCloseTo(end / 312 * 100);
+        expect(getComputedStyle(label).marginLeft).toBe("8px");
+        expect(getComputedStyle(label).textAlign).toBe("left");
+        expect(getComputedStyle(label).transform).toBe("translateY(-50%)");
+        expect(getComputedStyle(row).height).toBe(both ? "54px" : "32px");
+      }
+    }
+  });
+
   it("uses compact inline labels and identical employer-only and role-only row layouts", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
@@ -141,7 +174,7 @@ describe("career timeline UI", () => {
     expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
     fireEvent.click(within(career).getByRole("button", { name: /Education & certificates/ }));
     const education = within(career).getByLabelText("Education & certificates");
-    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("190px");
+    expect(getComputedStyle(education).getPropertyValue("--axis-left")).toBe("0px");
   });
 
   it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
