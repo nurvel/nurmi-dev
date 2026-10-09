@@ -97,6 +97,9 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     expect(within(career).queryByText(/Timeline scrolls horizontally/)).not.toBeInTheDocument();
     const zoom = within(career).getByRole("slider", { name: "Timeline zoom" });
+    const scroll = within(career).getByLabelText("Scrollable career timeline");
+    expect(scroll.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(getComputedStyle(scroll).touchAction).toBe("pan-x pan-y");
     expect(zoom).toHaveAttribute("min", "75");
     expect(zoom).toHaveAttribute("max", "250");
     expect(zoom).toHaveValue("100");

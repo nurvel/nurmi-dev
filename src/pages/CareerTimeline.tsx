@@ -7,11 +7,11 @@ const Head = styled.div`display:flex;align-items:baseline;justify-content:space-
 const Title = styled.h2`font:500 .75rem var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
 const Controls = styled.div`display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 8px;font:400 .8125rem var(--font-display);color:var(--color-text-secondary);label{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;}input{accent-color:var(--color-accent);width:18px;height:18px;}`;
 const ZoomControls = styled.div`display:flex;align-items:center;gap:10px;margin:0 0 6px;color:var(--color-text-secondary);font:400 .75rem var(--font-display);label{display:flex;align-items:center;gap:10px;min-height:44px;}input{width:min(260px,55vw);height:44px;accent-color:var(--color-accent);touch-action:pan-y;}output{min-width:3.5em;font-variant-numeric:tabular-nums;}`;
-const Scroll = styled.div`overflow-x:auto;overscroll-behavior-inline:contain;`;
+const Scroll = styled.div`overflow-x:auto;overscroll-behavior-inline:contain;touch-action:pan-x pan-y;`;
 const Canvas = styled.div<{ $width:number }>`--axis-left:0px;width:${({$width})=>$width}px;min-width:${({$width})=>$width}px;padding-right:190px;`;
 const Axis = styled.div`position:relative;width:calc(100% + 190px);height:22px;margin-left:var(--axis-left);color:var(--color-text-muted);font:500 .68rem var(--font-display);span{position:absolute;top:0;white-space:nowrap;transform:translateX(-50%);}span:first-child{transform:none;}`;
 const Legend = styled.div`display:flex;flex-wrap:wrap;gap:16px;margin:0 0 12px;font:400 .7rem var(--font-display);color:var(--color-text-secondary);span{display:inline-flex;align-items:center;gap:6px;}i{display:inline-block;width:20px;height:3px;background:var(--domain-color);}`;
-const Lane = styled.div`position:relative;isolation:isolate;margin-left:var(--axis-left);border-bottom:1px solid var(--color-border);&:before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:0;width:calc(100% + 190px);pointer-events:none;background:repeating-linear-gradient(to right,transparent 0,transparent calc(var(--grid-period) - 1px),var(--color-border) calc(var(--grid-period) - 1px),var(--color-border) var(--grid-period));}`;
+const Lane = styled.div`position:relative;isolation:isolate;margin-left:var(--axis-left);border-bottom:1px solid var(--color-border);&:before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:0;width:calc(100% + 190px);pointer-events:none;border-bottom:1px solid var(--color-border);background:repeating-linear-gradient(to right,transparent 0,transparent calc(var(--grid-period) - 1px),var(--color-border) calc(var(--grid-period) - 1px),var(--color-border) var(--grid-period));}`;
 const RoleLane = styled(Lane)`height:24px;&[data-row="employers"]{height:28px;}`;
 const RoleLabel = styled.span`position:absolute;width:178px;margin-left:8px;top:12.5px;transform:translateY(-50%);white-space:normal;text-align:left;color:var(--color-text-primary);font:500 .7rem var(--font-display);line-height:12px;`;
 const Segment = styled.button<{ $left:number; $width:number }>`position:absolute;left:${({$left})=>$left}%;width:max(3px,${({$width})=>$width}%);top:0;height:24px;border:0;padding:0;background:transparent;cursor:pointer;&:after{content:"";position:absolute;left:0;top:10px;width:100%;height:5px;border-radius:3px;background:var(--domain-color);pointer-events:none;}&[data-employer-rail]:after{top:18px;}&:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px;}`;
@@ -90,7 +90,7 @@ export default function CareerTimeline(){
       if(Math.abs(dx)<24||Math.abs(dx)<=Math.abs(dy))return;
       pinch={distance:Math.abs(dx),zoom:zoomRef.current};
     };
-    const onStart=(event:TouchEvent)=>tryStart(event.touches);
+    const onStart=(event:TouchEvent)=>{tryStart(event.touches);if(pinch)event.preventDefault();};
     const onMove=(event:TouchEvent)=>{
       if(!pinch){tryStart(event.touches);if(!pinch)return;}
       if(event.touches.length!==2)return;
@@ -101,7 +101,7 @@ export default function CareerTimeline(){
       suppressClickUntilRef.current=Date.now()+500;
     };
     const onEnd=()=>{if(pinch)suppressClickUntilRef.current=Date.now()+500;pinch=null;};
-    scroll.addEventListener("touchstart",onStart,{passive:true});
+    scroll.addEventListener("touchstart",onStart,{passive:false});
     scroll.addEventListener("touchmove",onMove,{passive:false});
     scroll.addEventListener("touchend",onEnd,{passive:true});
     scroll.addEventListener("touchcancel",onEnd,{passive:true});
@@ -141,7 +141,6 @@ export default function CareerTimeline(){
       <label><input type="checkbox" checked={showRoles} onChange={(event)=>setShowRoles(event.target.checked)}/>Roles</label>
     </Controls>
     <Legend aria-label="Career line colors">{careerData.domains.map((domain)=><span id={`career-legend-${domain.id}`} key={domain.id} style={{"--domain-color":`var(--career-${domain.id})`} as React.CSSProperties}><i aria-hidden="true"/>{domain.label}</span>)}</Legend>
-    <ZoomControls><label htmlFor="career-timeline-zoom">Timeline zoom<input id="career-timeline-zoom" type="range" min="75" max="250" step="1" value={zoomPercent} onChange={(event)=>changeZoom(Number(event.target.value))}/></label><output htmlFor="career-timeline-zoom">{zoomPercent}%</output></ZoomControls>
     {!showEmployers&&!showRoles&&<Empty>Select employers or roles to show career timeline information.</Empty>}
     <Scroll ref={scrollRef} aria-label="Scrollable career timeline" tabIndex={0} onClickCapture={(event)=>{if(Date.now()<suppressClickUntilRef.current){event.preventDefault();event.stopPropagation();}}}><Canvas $width={canvasWidth}>
       <Axis aria-label="Year axis" data-month-count={MONTH_COUNT} data-rail-width={railWidth}>{axisYears.map((year)=>{const ratio=(year*12-YEAR_START)/MONTH_COUNT;return <span key={year} style={{left:`calc(${ratio*100}% - ${ratio*LABEL_SPACE}px)`}}>{year}</span>;})}</Axis>
@@ -162,6 +161,7 @@ export default function CareerTimeline(){
         </CombinedEmployer>;
       })}
     </Canvas></Scroll>
+    <ZoomControls><label htmlFor="career-timeline-zoom">Timeline zoom<input id="career-timeline-zoom" type="range" min="75" max="250" step="1" value={zoomPercent} onChange={(event)=>changeZoom(Number(event.target.value))}/></label><output htmlFor="career-timeline-zoom">{zoomPercent}%</output></ZoomControls>
     <Dialog ref={dialogRef} aria-labelledby="career-dialog-title" aria-describedby="career-dialog-description" onCancel={(event)=>{event.preventDefault();close();}} onKeyDown={trapFocus}>
       {detail&&<><h3 id="career-dialog-title">{detail.title}</h3>{activeRole&&<p><strong>{activeRole.item.role}</strong></p>}{(detail.employer||detail.institution)&&<p>{detail.employer??detail.institution}</p>}
         {detail.employer&&<DialogRoles aria-label="Employer roles">{roles.map(({item})=><button key={item.id} type="button" data-role-id={item.id} aria-label={`${item.role} — ${item.focusDetail}`} aria-pressed={item.id===detail.selectedRole} onClick={()=>setDetail({...detail,selectedRole:item.id})}>{item.role}<small> · {item.focusDetail}</small></button>)}</DialogRoles>}
