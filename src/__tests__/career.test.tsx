@@ -97,6 +97,7 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     const heading = within(career).getByRole("button", { name: "Nitor details" });
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
+    expect(getComputedStyle(heading).width).toBe("max-content");
     expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
     expect(getComputedStyle(career).getPropertyValue("--career-employer")).toBe("#b9a3ef");
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
