@@ -21,6 +21,7 @@ describe("approved one-page About page semantics", () => {
     expect(screen.getByText("Product Engineer")).toBeInTheDocument();
     expect(screen.getByText("15+ years connecting business goals with technology. Working with software systems from problem framing to production.")).toBeInTheDocument();
     expect(screen.getByText("I work across SaaS platforms, private-sector digital services, and public-sector systems in technical, product, and leadership roles.")).toBeInTheDocument();
+    expect(screen.getByText(/After serving as Head of R&D and in other leadership roles, I chose to return to hands-on software development/)).toBeInTheDocument();
     for (const role of ["Technical Product Owner", "Full-Stack Developer", "Head of R&D", "Performance Marketer"]) expect(screen.getAllByText(role).length).toBeGreaterThan(0);
     for (const title of ["Contract monitoring system", "Configuration UI", "SaaS marketplace", "Website & SEO"]) expect(screen.getByRole("heading", { level: 3, name: title })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Email" })).toHaveAttribute("href", "mailto:nurmi.vp@gmail.com");
