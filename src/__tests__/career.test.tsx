@@ -159,6 +159,8 @@ describe("career timeline UI", () => {
     const career = screen.getByRole("region", { name: "Career" });
     const disclosure = career.querySelector<HTMLDetailsElement>("details[aria-label='Career details']")!;
     expect(disclosure.open).toBe(false);
+    const disclosureStyles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
+    expect(disclosureStyles).toContain("summary{min-height:44px;display:list-item;");
     const buttons = Array.from(disclosure.querySelectorAll<HTMLButtonElement>("button"));
     expect(buttons).toHaveLength(14);
     for (const [index, assignment] of careerData.assignments.entries()) {
