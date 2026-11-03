@@ -163,20 +163,27 @@ describe("career timeline UI", () => {
     expect(disclosureStyles).toContain("summary{min-height:44px;display:list-item;");
     const buttons = Array.from(disclosure.querySelectorAll<HTMLButtonElement>("button"));
     expect(buttons).toHaveLength(14);
+    expect(new Set(buttons.map(button => button.getAttribute("aria-label"))).size).toBe(14);
+    expect(new Set(buttons.map(button => button.textContent)).size).toBe(14);
     for (const [index, assignment] of careerData.assignments.entries()) {
-      expect(buttons[index]).toHaveAccessibleName(new RegExp(assignment.role));
-      expect(buttons[index]).toHaveStyle({ minHeight: "44px" });
+      const trigger = buttons[index];
+      expect(trigger).toHaveAccessibleName(new RegExp(assignment.role));
+      expect(trigger).toHaveStyle({ minHeight: "44px" });
+      const repeated = careerData.assignments.some(other => other.id !== assignment.id && other.employerId === assignment.employerId && other.role === assignment.role);
+      if (repeated) {
+        expect(trigger).toHaveAccessibleName(expect.stringContaining(assignment.focusDetail));
+        expect(trigger).toHaveTextContent(assignment.focusDetail);
+      }
+      expect(trigger.textContent).not.toMatch(/\b20\d{2}\b/);
+      trigger.focus();
+      fireEvent.click(trigger);
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveTextContent(assignment.description);
+      expect(dialog).toHaveTextContent(assignment.focusDetail);
+      expect(dialog.textContent).not.toMatch(/\b20\d{2}\b/);
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      expect(trigger).toHaveFocus();
     }
-    const assignment = careerData.assignments.find(({ id }) => id === "nitor_current")!;
-    const trigger = within(disclosure).getByRole("button", { name: /Full-stack Developer at Nitor/ });
-    trigger.focus();
-    fireEvent.click(trigger);
-    const dialog = screen.getByRole("dialog", { name: "Nitor" });
-    expect(dialog).toHaveTextContent(assignment.description);
-    expect(dialog).toHaveTextContent(assignment.focusDetail);
-    expect(dialog.textContent).not.toMatch(/\b20\d{2}\b/);
-    fireEvent.keyDown(dialog, { key: "Escape" });
-    expect(trigger).toHaveFocus();
   });
 
   it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {

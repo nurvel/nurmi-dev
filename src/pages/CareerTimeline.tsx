@@ -123,7 +123,12 @@ export default function CareerTimeline(){
         </CombinedEmployer>;
       })}
     </Canvas></Scroll>
-    <Details aria-label="Career details"><summary>Career details</summary><ul>{layout.assignments.map(({item})=>{const employer=careerData.employers.find(({id})=>id===item.employerId)!;return <li key={item.id}><button type="button" aria-label={`${item.role} at ${employer.label}`} onClick={(event)=>open(workDetail(item,employer.label),event.currentTarget)}>{item.role} · {employer.label}</button></li>;})}</ul></Details>
+    <Details aria-label="Career details"><summary>Career details</summary><ul>{layout.assignments.map(({item})=>{
+      const employer=careerData.employers.find(({id})=>id===item.employerId)!;
+      const repeated=layout.assignments.some(({item:other})=>other.id!==item.id&&other.employerId===item.employerId&&other.role===item.role);
+      const focus=repeated?` — ${item.focusDetail}`:"";
+      return <li key={item.id}><button type="button" aria-label={`${item.role} at ${employer.label}${focus}`} onClick={(event)=>open(workDetail(item,employer.label),event.currentTarget)}>{item.role} · {employer.label}{focus}</button></li>;
+    })}</ul></Details>
     <Dialog ref={dialogRef} aria-labelledby="career-dialog-title" aria-describedby="career-dialog-description" onCancel={(event)=>{event.preventDefault();close();}} onKeyDown={trapFocus}>
       {detail&&<><h3 id="career-dialog-title">{detail.title}</h3>{activeRole&&<p><strong>{activeRole.item.role}</strong></p>}<p>{detail.employer}</p>
         {detail.employer&&<DialogRoles aria-label="Employer roles">{roles.map(({item})=><button key={item.id} type="button" data-role-id={item.id} aria-label={`${item.role} — ${item.focusDetail}`} aria-pressed={item.id===detail.selectedRole} onClick={()=>setDetail({...detail,selectedRole:item.id})}>{item.role}<small> · {item.focusDetail}</small></button>)}</DialogRoles>}
