@@ -12,6 +12,15 @@ describe("approved one-page profile content", () => {
     expect(screen.getByText(aboutSiteContent.profile.subtitle)).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "About" })).toBeInTheDocument();
   });
+  it("uses a relaxed line height for the hero introduction", () => {
+    const styles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
+    expect(styles).toContain("clamp(1.05rem,1.6vw,1.3rem)/1.5 var(--font-body)");
+  });
+  it("gives the stacked portrait more breathing room while preserving the desktop gap", () => {
+    const styles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
+    expect(styles).toMatch(/@media\(max-width:820px\)\{\.[^{]+\{grid-template-columns:1fr;gap:32px;padding:12px 0 24px;/);
+    expect(styles).toContain("grid-template-columns:1.05fr 1fr;gap:48px;");
+  });
   it("renders five titled work cards and preserves the client destination", () => {
     const section = screen.getByRole("heading", { level: 2, name: "Recent work" }).closest("section");
     expect(section).toBeTruthy();
