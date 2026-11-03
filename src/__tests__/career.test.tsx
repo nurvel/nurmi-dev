@@ -146,6 +146,35 @@ describe("career timeline UI", () => {
     expect(axis.textContent).toContain("2027");
     expect(axis.textContent).not.toContain("2028");
     expect(axis.lastElementChild).toHaveTextContent("2027");
+    expect(axis.querySelectorAll('[data-year="intermediate"]')).toHaveLength(4);
+    expect(axis.querySelector('[data-year="endpoint"]')).toHaveTextContent("2008");
+    expect(axis.lastElementChild).toHaveAttribute("data-year", "endpoint");
+    const axisStyles = [...document.querySelectorAll("style")].map((style) => style.textContent).join(" ");
+    expect(axisStyles).toContain("@media(max-width:560px)");
+    expect(axisStyles).toContain('[data-year="intermediate"]');
+  });
+
+  it("offers all fourteen assignments through a compact keyboard alternative that opens the exact dialog and returns focus", () => {
+    renderCombinedCareer();
+    const career = screen.getByRole("region", { name: "Career" });
+    const disclosure = career.querySelector<HTMLDetailsElement>("details[aria-label='Career details']")!;
+    expect(disclosure.open).toBe(false);
+    const buttons = Array.from(disclosure.querySelectorAll<HTMLButtonElement>("button"));
+    expect(buttons).toHaveLength(14);
+    for (const [index, assignment] of careerData.assignments.entries()) {
+      expect(buttons[index]).toHaveAccessibleName(new RegExp(assignment.role));
+      expect(buttons[index]).toHaveStyle({ minHeight: "44px" });
+    }
+    const assignment = careerData.assignments.find(({ id }) => id === "nitor_current")!;
+    const trigger = within(disclosure).getByRole("button", { name: /Full-stack Developer at Nitor/ });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Nitor" });
+    expect(dialog).toHaveTextContent(assignment.description);
+    expect(dialog).toHaveTextContent(assignment.focusDetail);
+    expect(dialog.textContent).not.toMatch(/\b20\d{2}\b/);
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(trigger).toHaveFocus();
   });
 
   it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {

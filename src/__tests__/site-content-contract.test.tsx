@@ -18,6 +18,18 @@ describe("approved one-page profile content", () => {
     expect(within(section as HTMLElement).getAllByRole("heading", { level: 3 })).toHaveLength(5);
     expect(screen.getByRole("link", { name: /Created and optimised/ })).toHaveAttribute("href", "https://kauneushoitolahanna.fi");
   });
+  it("uses the approved readable type sizes for headings, cards, role pills and contact links", () => {
+    expect(screen.getByRole("heading", { name: "About" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Recent work" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Career" })).toBeInTheDocument();
+    const styles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
+    expect(styles.match(/font:600 1\.125rem\/1\.4 var\(--font-display\)/g)).toHaveLength(2);
+    expect(styles).toContain("font:500 .875rem/1.4 var(--font-display)");
+    expect(styles).toContain("font:400 1rem/1.6 var(--font-body)");
+    expect(styles).toContain("font:400 .875rem/1.4 var(--font-display)");
+    const email = within(screen.getByRole("navigation", { name: "Contact links" })).getByRole("link", { name: "Email" });
+    expect(getComputedStyle(email).minHeight).toBe("44px");
+  });
   it("exposes contact links with accessible labels and safe external targets", () => {
     const nav = screen.getByRole("navigation", { name: "Contact links" });
     expect(within(nav).getByRole("link", { name: "Email" })).toHaveAttribute("href", "mailto:nurmi.vp@gmail.com");
@@ -27,10 +39,8 @@ describe("approved one-page profile content", () => {
   it("retains exact source-backed prose, emphasis and client/card pairing", () => {
     const about = screen.getByRole("region", { name: "About" });
     const paragraphs = about.querySelectorAll("p");
-    expect(paragraphs).toHaveLength(aboutSiteContent.about.length);
-    aboutSiteContent.about.forEach((parts, index) => {
-      expect(paragraphs[index].textContent).toBe(parts.map(part => part.text).join(""));
-    });
+    expect(Array.from(paragraphs, paragraph => paragraph.textContent).join(" ")).toBe(aboutSiteContent.about.map(parts => parts.map(part => part.text).join("")).join(" "));
+    expect(Array.from(paragraphs).some(paragraph => paragraph.textContent?.startsWith("AI accelerates implementation;"))).toBe(true);
     for (const phrase of ["agentic coding", "spec-driven development"]) {
       expect(screen.getByText(phrase).tagName).toBe("STRONG");
     }

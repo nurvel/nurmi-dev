@@ -28,24 +28,24 @@ const PortraitBall = styled.div`position:relative;aspect-ratio:1;width:min(100%,
 const Portrait = styled.img`position:absolute;width:137%;max-width:none;height:auto;left:-44%;top:2%;filter:grayscale(1) contrast(1.02);user-select:none;-webkit-user-drag:none;`;
 const Section = styled.section`padding-top:64px;`;
 const SectionHead = styled.div`display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--color-border);padding-bottom:12px;margin-bottom:32px;`;
-const SectionTitle = styled.h2`font:500 .75rem var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
+const SectionTitle = styled.h2`font:600 1.125rem/1.4 var(--font-display);letter-spacing:0;color:var(--color-text-primary);margin:0;&:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-accent);margin-right:12px;vertical-align:2px;}`;
 const AboutGrid = styled.div`display:grid;grid-template-columns:2fr 1fr;gap:48px;align-items:start;@media(max-width:820px){grid-template-columns:1fr;gap:24px;}`;
 const AboutCopy = styled.div`p{font:400 1.125rem/1.7 var(--font-body);color:var(--color-text-secondary);margin:0 0 20px;max-width:560px;text-wrap:pretty;}p:last-child{margin-bottom:0;}a{color:var(--color-text-primary);text-decoration:underline;text-decoration-color:var(--color-accent);text-underline-offset:3px;}`;
 const Roles = styled.div`display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:8px;align-self:center;`;
-const Role = styled.span`border:1px solid var(--color-border);border-radius:999px;padding:8px 14px;font:400 .8125rem var(--font-display);color:var(--color-text-secondary);`;
+const Role = styled.span`border:1px solid var(--color-border);border-radius:999px;padding:8px 14px;font:400 .875rem/1.4 var(--font-display);color:var(--color-text-secondary);`;
 const WorkRoles = styled.div`display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;`;
 const WorkRole = styled(Role)`max-width:100%;box-sizing:border-box;line-height:1.45;`;
 const WorkGrid = styled.div`display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;@media(max-width:900px){grid-template-columns:repeat(2,minmax(0,1fr));}@media(max-width:560px){grid-template-columns:1fr;}`;
 const Work = styled.article`position:relative;overflow:hidden;padding:24px 24px 32px 32px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);display:flex;flex-direction:column;gap:12px;min-height:220px;&:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--color-accent-decorative);}`;
-const Client = styled.p`font:500 .75rem var(--font-display);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-muted);margin:0;`;
+const Client = styled.p`font:500 .875rem/1.4 var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted);margin:0;`;
 const WorkTitle = styled.h3`font:600 1.125rem/1.3 var(--font-body);color:var(--color-text-primary);letter-spacing:-.01em;margin:0;`;
-const WorkDescription = styled.p`font:400 .9375rem/1.6 var(--font-body);color:var(--color-text-secondary);margin:0;text-wrap:pretty;`;
-const Contact = styled.section`padding-top:72px;margin-top:72px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:end;@media(max-width:820px){grid-template-columns:1fr;align-items:start;}`;
+const WorkDescription = styled.p`font:400 1rem/1.6 var(--font-body);color:var(--color-text-secondary);margin:0;text-wrap:pretty;`;
+const Contact = styled.section`padding-top:72px;margin-top:72px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:end;@media(max-width:820px){grid-template-columns:1fr;align-items:start;padding-top:48px;margin-top:40px;}`;
 const Prompt = styled.h2`font:500 clamp(1.75rem,4vw,2.5rem)/1.1 var(--font-body);letter-spacing:-.025em;color:var(--color-text-primary);margin:0;max-width:640px;`;
 const ContactRight = styled.div`display:flex;flex-direction:column;gap:16px;align-items:flex-start;`;
 const SayHello = styled.div`display:flex;align-items:flex-start;gap:2px;color:var(--color-accent);font:600 1.9rem/.85 var(--font-handwritten);`;
 const Arrow = styled.svg`width:62px;height:46px;flex-shrink:0;`;
-const Links = styled.nav`display:flex;flex-direction:column;gap:4px;align-items:flex-start;a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:4px 8px;color:var(--color-text-secondary);font:400 .8125rem var(--font-display);text-decoration:none;&:before{content:"→";color:var(--color-accent);} &:hover{color:var(--color-text-primary);text-decoration:underline;text-decoration-color:var(--color-accent);text-underline-offset:4px;}}`;
+const Links = styled.nav`display:flex;flex-direction:column;gap:4px;align-items:flex-start;a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:4px 8px;color:var(--color-text-secondary);font:400 1rem/1.4 var(--font-display);text-decoration:none;&:before{content:"→";color:var(--color-accent);} &:hover{color:var(--color-text-primary);text-decoration:underline;text-decoration-color:var(--color-accent);text-underline-offset:4px;}}`;
 
 export default function About() {
   return <PageContainer className="about" id="about"><Container>
