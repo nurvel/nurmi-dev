@@ -5,6 +5,10 @@ const ROOT=process.cwd();
 const read=(name:string)=>fs.readFileSync(path.join(ROOT,name),"utf-8");
 describe("first-party font delivery contract",()=>{
  const globalStyles=read("src/common/globalStyles.tsx");
+ it("measures the handwritten contact text rather than the theme toggle",()=>{
+  const script=read("scripts/verify-font-delivery.mjs");
+  expect(script).toContain(`family(document.querySelector('.about section[aria-label="Contact"] [aria-hidden="true"]'))`);
+ });
  it("declares self-hosted Inter, Space Grotesk and Caveat with synthesis disabled",()=>{
   for(const family of ["Inter","Space Grotesk","Caveat"]) expect(globalStyles).toContain(`font-family:${family==='Space Grotesk'?"'Space Grotesk'":family}`);
   expect(globalStyles).toMatch(/font-synthesis:none/);
