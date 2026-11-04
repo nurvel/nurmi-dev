@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="The purpose and read-only Google API permissions of Aito Nurmi Integrations.">
+  <meta name="description" content="The purpose, read-only integrations and optional owner-only Drive tools of Aito Nurmi Integrations.">
   <title>Aito Nurmi Integrations | nurmi.dev</title>
   <link rel="canonical" href="https://nurmi.dev/docs/integrations/google/">
   <link rel="stylesheet" href="/docs/styles.css">
@@ -14,20 +14,24 @@
   <main id="content">
 
     <h1>Aito Nurmi Integrations</h1>
-    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its current Google Search Console and Google Tag Manager connections and the owner's separately approved preparation of a local Drive read pilot.</p>
+    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its Google Search Console and Google Tag Manager connections, the earlier local Drive read pilot and a separately enabled, owner-only Drive tool.</p>
 <h2>Purpose and users</h2>
 <p>The application is a local integration used by the owner and an authorized operator. It reads search performance data from approved Search Console properties and account and container information from Tag Manager for reporting and technical checks.</p>
 <p>Kauneushoitola Hanna (KHH) is the first reference use case. KHH is a user of the integration, not its permanent application name.</p>
 <p>The application does not provide public registration. The Google account user authorizes access through Google's consent screen. Ownership of Google resources does not transfer to the integration.</p>
 <h2>Google permissions</h2>
 <ul><li>Search Console: <code>https://www.googleapis.com/auth/webmasters.readonly</code></li><li>Tag Manager: <code>https://www.googleapis.com/auth/tagmanager.readonly</code></li></ul>
-<p>These are read-only permissions. They do not permit editing or publishing Tag Manager configurations. Apart from the planned Drive pilot below, this description does not cover GA4, Google Ads, Gmail or other services or providers. A broader application name does not enable additional integrations or permissions.</p>
-<section aria-labelledby="drive-pilot">
-<h2 id="drive-pilot">Planned owner-only local Drive read pilot</h2>
-<p>The owner has approved preparation of a local Drive read pilot for the owner's assistant only. The pilot is not activated. It is not available for public registration or other assistant profiles.</p>
-<p>The proposed permission is <code>https://www.googleapis.com/auth/drive.readonly</code>. It would cover all files accessible to the account, not just a selected folder. It does not grant write, delete or sharing rights. The first test is further limited to one harmless file selected by the owner; that operational limit is not a narrower Google permission.</p>
-<p>Before activation, the operator must verify secure credential storage and the permitted data path. The owner must then select the intended Google account, complete Google's consent and choose the test file. Publishing this description does not complete any of those steps, enable a Drive connection or authorize a Gmail connection, backup job or change to the existing integrations.</p>
-<p>The planned pilot permits a local read test, not general cloud-model analysis of Drive files. Its data-handling conditions are described in the Privacy Policy below.</p>
+<p>These Search Console and Tag Manager permissions remain read-only. They do not permit editing or publishing Tag Manager configurations. Apart from the separate Drive use below, this description does not cover GA4, Google Ads, Gmail or other integrations. A broader application name does not enable additional integrations or permissions.</p>
+<section aria-labelledby="drive-read-history">
+<h2 id="drive-read-history">Earlier local-only Drive read pilot</h2>
+<p>The earlier local-only read pilot completed an owner-selected operational read test using <code>https://www.googleapis.com/auth/drive.readonly</code>. That permission does not grant write, delete or sharing rights. The pilot returned only pass/fail results to the assistant, not file names or contents. Its narrow local-only handling is historical and does not authorize the separate tool below.</p>
+</section>
+<section aria-labelledby="drive-tools">
+<h2 id="drive-tools">Optional owner-only, on-demand Drive tools</h2>
+<p>When enabled by separate Google consent and operational checks, this tool uses <code>https://www.googleapis.com/auth/drive</code>. This permission covers all files accessible to the account, not just a selected folder. The tool is for the owner's assistant, not public registration or other assistant profiles.</p>
+<p>Allowed operations are narrower than the Google permission: find and inspect metadata, download selected files to private local copies, create folders, create or edit supported files, rename or move one file, and create named copies as checkpoints. Initial editing supports UTF-8 text files and Google Docs text, with a 1 MiB input limit. Sheets/Slides content editing, folder moves and shared-drive moves are not supported in this initial tool. Metadata search coverage and revision availability must be reported honestly.</p>
+<p>Checkpoint copies have their own file IDs and are separate from Google's automatically managed revision history; they are not named native revisions or a promise of permanent history. The scope can technically permit deletion and sharing, but deletion, trashing, sharing and ownership changes are not supported tool operations. A move can change inherited access through the destination folder and requires explicit acknowledgment.</p>
+<p>Only information needed for an individually requested task may be supplied to the owner's Hermes conversation and its OpenAI model service, under the separate processing conditions in the Privacy Policy. There is no automated whole-Drive scan. Publication does not activate the tool, grant Google permissions, verify provider settings or certify compliance. The operator must verify secure storage and the permitted data path before consent and use.</p>
 </section>
 <h2>Managing authorization</h2>
 <p>You can revoke authorization in <a href="https://myaccount.google.com/connections">your Google account's connections settings</a>. Continued access depends on valid authorization and Google's conditions. This page does not guarantee an uninterrupted connection.</p>
