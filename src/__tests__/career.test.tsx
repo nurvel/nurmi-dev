@@ -107,6 +107,30 @@ describe("career timeline UI", () => {
     }
   });
 
+  it("keeps timeline role labels on one line without dropping their full names", () => {
+    renderCombinedCareer();
+    const career = screen.getByRole("region", { name: "Career" });
+    for (const mode of ["both", "roles"]) {
+      if (mode === "roles") fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+      for (const label of career.querySelectorAll<HTMLElement>("[data-role-label]")) {
+        expect(label).toHaveStyle({ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
+        expect(label).toHaveAttribute("title", label.textContent);
+      }
+      expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
+    }
+  });
+
+  it("uses the available trailing space before truncating a role label", () => {
+    renderCombinedCareer();
+    const career = screen.getByRole("region", { name: "Career" });
+    for (const mode of ["both", "roles"]) {
+      if (mode === "roles") fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+      for (const label of career.querySelectorAll<HTMLElement>('[data-role-label][data-label-side="right"]')) {
+        expect(label.style.width).toMatch(/^calc\(/);
+      }
+    }
+  });
+
   it("filters employers and roles independently while keeping shared rows and truthful role segments", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
@@ -246,13 +270,30 @@ describe("career timeline UI", () => {
     expect(getComputedStyle(label).fontWeight).toBe("700");
   });
 
-  it("keeps the employer heading close to its role rows", () => {
+  it("groups each employer with its own roles using a neutral visual boundary", () => {
+    renderCombinedCareer();
+    const career = screen.getByRole("region", { name: "Career" });
+    expect(within(career).getAllByRole("group", { name: / roles$/ })).toHaveLength(9);
+    for (const employer of careerData.employers) {
+      const group = within(career).getByRole("group", { name: `${employer.label} roles` });
+      expect(within(group).getByRole("button", { name: `${employer.label} details` })).toBeInTheDocument();
+      const expected = careerData.assignments.filter(assignment => assignment.employerId === employer.id);
+      expect([...group.querySelectorAll<HTMLElement>("[data-role-rail]")].map(rail => rail.dataset.roleRail).sort()).toEqual(expected.map(assignment => assignment.id).sort());
+      expect(group).toHaveStyle({ marginTop: "8px", paddingBottom: "6px", borderRadius: "6px" });
+    }
+    const styles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
+    expect(styles).toContain("background:var(--color-surface);outline:1px solid var(--color-border);");
+    fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
+    expect(within(career).queryAllByRole("group", { name: / roles$/ })).toHaveLength(0);
+  });
+
+  it("keeps a clear gap between the employer heading and its role rows", () => {
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLElement) {
       return this.matches("button[data-employer-label]") ? 23 : 0;
     });
     renderCombinedCareer();
     const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
-    expect(getComputedStyle(group).paddingTop).toBe("24px");
+    expect(getComputedStyle(group).paddingTop).toBe("32px");
     expect(getComputedStyle(group.querySelector("button")!).minHeight).toBe("24px");
     const heading = group.querySelector('button[aria-label="twoday details"]')!;
     expect(getComputedStyle(heading).display).toBe("flex");
