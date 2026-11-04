@@ -60,6 +60,38 @@ describe("career data", () => {
 });
 
 describe("career timeline UI", () => {
+  it("keeps the career visualization static apart from its two filters in every mode", () => {
+    render(<App />);
+    const career = screen.getByRole("region", { name: "Career" });
+    const employers = within(career).getByRole("checkbox", { name: "Employers" });
+    const roles = within(career).getByRole("checkbox", { name: "Roles" });
+    const expectStatic = (mode: "roles" | "both" | "employers" | "none") => {
+      expect(within(career).queryAllByRole("button")).toHaveLength(0);
+      expect(within(career).queryByRole("dialog")).not.toBeInTheDocument();
+      expect(career.querySelector("details")).toBeNull();
+      expect(career.querySelectorAll("input[type='checkbox']")).toHaveLength(2);
+      expect(career.querySelectorAll("button")).toHaveLength(0);
+      for (const rail of career.querySelectorAll<HTMLElement>("[data-role-rail], [data-employer-rail]")) {
+        expect(rail.tagName).toBe("SPAN");
+        expect(rail).toHaveAttribute("role", "img");
+        expect(rail.getAttribute("aria-label")).toMatch(/.+/);
+        expect(rail).toHaveAttribute("aria-describedby");
+        expect(rail).not.toHaveAttribute("tabindex");
+        expect(rail).not.toHaveAttribute("type");
+      }
+      expect(career.querySelectorAll("[data-employer-label]").length).toBe(mode === "both" || mode === "employers" ? 9 : 0);
+      expect(career.querySelectorAll("[data-role-rail]").length).toBe(mode === "roles" || mode === "both" ? 14 : 0);
+      expect(career.querySelectorAll("[data-employer-rail]").length).toBe(mode === "employers" ? 9 : 0);
+    };
+    expectStatic("roles");
+    fireEvent.click(employers);
+    expectStatic("both");
+    fireEvent.click(roles);
+    expectStatic("employers");
+    fireEvent.click(employers);
+    expectStatic("none");
+  });
+
   it("defaults to roles only while allowing employers to be enabled", () => {
     render(<App />);
     const career = screen.getByRole("region", { name: "Career" });
@@ -101,7 +133,7 @@ describe("career timeline UI", () => {
     for (const row of career.querySelectorAll<HTMLElement>('[data-row="employers"]')) {
       const label = row.querySelector<HTMLElement>("[data-employer-label]")!;
       const rail = row.querySelector<HTMLElement>("[data-employer-rail]")!;
-      // 24px hit area minus 5px rail and 4px bottom inset.
+      // 24px rail box minus 5px rail and 4px bottom inset.
       expect(parseFloat(rail.style.top) + 15).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
       expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
     }
@@ -154,8 +186,6 @@ describe("career timeline UI", () => {
     fireEvent.click(rolesFilter);
     expect(career.querySelectorAll('[data-row="employers"]')).toHaveLength(9);
     expect(career.querySelectorAll("[data-employer-id]")).toHaveLength(9);
-    fireEvent.click(within(career).getByRole("button", { name: "Nitor details" }));
-    expect(within(screen.getByRole("dialog", { name: "Nitor" })).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
   });
 
   it("starts the shared axis at 2008 and crops earlier history without changing career facts", () => {
@@ -178,39 +208,8 @@ describe("career timeline UI", () => {
     expect(axisStyles).toContain('[data-year="intermediate"]');
   });
 
-  it("offers all fourteen assignments through a compact keyboard alternative that opens the exact dialog and returns focus", () => {
-    renderCombinedCareer();
-    const career = screen.getByRole("region", { name: "Career" });
-    const disclosure = career.querySelector<HTMLDetailsElement>("details[aria-label='Career details']")!;
-    expect(disclosure.open).toBe(false);
-    const disclosureStyles = [...document.querySelectorAll("style")].map(style => style.textContent).join(" ");
-    expect(disclosureStyles).toContain("summary{min-height:44px;display:list-item;");
-    const buttons = Array.from(disclosure.querySelectorAll<HTMLButtonElement>("button"));
-    expect(buttons).toHaveLength(14);
-    expect(new Set(buttons.map(button => button.getAttribute("aria-label"))).size).toBe(14);
-    expect(new Set(buttons.map(button => button.textContent)).size).toBe(14);
-    for (const [index, assignment] of careerData.assignments.entries()) {
-      const trigger = buttons[index];
-      expect(trigger).toHaveAccessibleName(new RegExp(assignment.role));
-      expect(trigger).toHaveStyle({ minHeight: "44px" });
-      const repeated = careerData.assignments.some(other => other.id !== assignment.id && other.employerId === assignment.employerId && other.role === assignment.role);
-      if (repeated) {
-        expect(trigger).toHaveAccessibleName(expect.stringContaining(assignment.focusDetail));
-        expect(trigger).toHaveTextContent(assignment.focusDetail);
-      }
-      expect(trigger.textContent).not.toMatch(/\b20\d{2}\b/);
-      trigger.focus();
-      fireEvent.click(trigger);
-      const dialog = screen.getByRole("dialog");
-      expect(dialog).toHaveTextContent(assignment.description);
-      expect(dialog).toHaveTextContent(assignment.focusDetail);
-      expect(dialog.textContent).not.toMatch(/\b20\d{2}\b/);
-      fireEvent.keyDown(dialog, { key: "Escape" });
-      expect(trigger).toHaveFocus();
-    }
-  });
 
-  it("fades only the cropped rail in each active filter mode while retaining its full hit area", () => {
+  it("fades only the cropped rail in each active filter mode while preserving its placement", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const employers = within(career).getByRole("checkbox", { name: "Employers" });
@@ -221,7 +220,7 @@ describe("career timeline UI", () => {
       const rail = career.querySelector<HTMLElement>(mode === "employers" ? '[data-employer-rail="freelance"]' : '[data-role-rail="freelance_web"]')!;
       expect(rail).toHaveAttribute("data-continues-before", "true");
       expect(rail).toHaveAttribute("aria-description", "Continues from before the visible timeline.");
-      expect(career.querySelectorAll('button[data-continues-before="true"]')).toHaveLength(1);
+      expect(career.querySelectorAll('[data-continues-before="true"]')).toHaveLength(1);
       expect(parseFloat(getComputedStyle(rail).left)).toBe(0);
       expect(Number(getComputedStyle(rail).width.match(/,\s*([\d.]+)%/)?.[1])).toBeCloseTo(24 / 228 * 100);
       expect(getComputedStyle(rail).height).toBe("24px");
@@ -229,10 +228,8 @@ describe("career timeline UI", () => {
       expect(rules.some(rule => rule.includes('[data-continues-before="true"]:after'))).toBe(true);
       // jsdom omits mask-image declarations; real-browser acceptance checks the computed mask.
       expect([...document.querySelectorAll("style")].map(style => style.textContent).join(" ")).toContain("mask-image:linear-gradient(to right,transparent,black min(24px,40%))");
-      fireEvent.click(rail);
-      expect(screen.getByRole("dialog", { name: "Freelance" })).toHaveTextContent("Built websites and web services");
-      fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
-      expect(rail).toHaveFocus();
+      expect(rail).toHaveAttribute("role", "img");
+      expect(rail).toHaveAccessibleName(mode === "employers" ? "Freelance" : "Web Developer at Freelance");
     }
   });
 
@@ -253,7 +250,7 @@ describe("career timeline UI", () => {
   it("distinguishes employers with quiet typography instead of a colored badge", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
-    const heading = within(career).getByRole("button", { name: "Nitor details" });
+    const heading = career.querySelector('[data-employer-id="nitor"] [data-employer-label]')!;
     expect(getComputedStyle(heading).borderRadius).toBe("4px");
     expect(heading).toHaveStyle({ width: "max-content", maxWidth: "100%", whiteSpace: "nowrap" });
     expect(getComputedStyle(heading).borderTopStyle).toBe("solid");
@@ -276,7 +273,7 @@ describe("career timeline UI", () => {
     expect(within(career).getAllByRole("group", { name: / roles$/ })).toHaveLength(9);
     for (const employer of careerData.employers) {
       const group = within(career).getByRole("group", { name: `${employer.label} roles` });
-      expect(within(group).getByRole("button", { name: `${employer.label} details` })).toBeInTheDocument();
+      expect(within(group).getByText(employer.label)).toBeInTheDocument();
       const expected = careerData.assignments.filter(assignment => assignment.employerId === employer.id);
       expect([...group.querySelectorAll<HTMLElement>("[data-role-rail]")].map(rail => rail.dataset.roleRail).sort()).toEqual(expected.map(assignment => assignment.id).sort());
       expect(group).toHaveStyle({ marginTop: "8px", paddingBottom: "6px", borderRadius: "6px" });
@@ -289,13 +286,13 @@ describe("career timeline UI", () => {
 
   it("keeps a clear gap between the employer heading and its role rows", () => {
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLElement) {
-      return this.matches("button[data-employer-label]") ? 23 : 0;
+      return this.matches("[data-employer-label]") ? 23 : 0;
     });
     renderCombinedCareer();
-    const group = screen.getByRole("button", { name: "twoday details" }).parentElement!;
+    const group = document.querySelector('[data-employer-id="twoday"]')!;
     expect(getComputedStyle(group).paddingTop).toBe("32px");
-    expect(getComputedStyle(group.querySelector("button")!).minHeight).toBe("24px");
-    const heading = group.querySelector('button[aria-label="twoday details"]')!;
+    expect(getComputedStyle(group.querySelector("[data-employer-label]")!).minHeight).toBe("24px");
+    const heading = group.querySelector('[data-employer-label]')!;
     expect(getComputedStyle(heading).display).toBe("flex");
     expect(getComputedStyle(heading).alignItems).toBe("flex-end");
     const firstLabel = group.querySelector('[data-role-row] span')!;
@@ -305,7 +302,7 @@ describe("career timeline UI", () => {
   it("clamps employer headings inside their row while keeping the source start metadata", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
-    for (const heading of within(career).getAllByRole("button", { name: / details$/ })) {
+    for (const heading of career.querySelectorAll<HTMLElement>("[data-employer-label]")) {
       expect(heading.style.left).toMatch(/px$/);
       expect(getComputedStyle(heading).width).toBe("max-content");
       expect(getComputedStyle(heading).maxWidth).toBe("100%");
@@ -321,7 +318,7 @@ describe("career timeline UI", () => {
     const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText));
     const classes = Array.from(nitor.classList);
     expect(rules.some((rule) => classes.some((name) => rule.includes(`.${name}:before`) && rule.includes("background: var(--domain-color)")))).toBe(false);
-    expect(within(career).getByRole("button", { name: "Nitor details" })).toBeVisible();
+    expect(career.querySelector('[data-employer-id="nitor"] [data-employer-label]')).toBeVisible();
     expect(career.querySelectorAll("[data-role-rail]")).toHaveLength(14);
     fireEvent.click(within(career).getByRole("checkbox", { name: "Roles" }));
     expect(career.querySelectorAll("[data-employer-rail]")).toHaveLength(9);
@@ -337,7 +334,7 @@ describe("career timeline UI", () => {
       expect(label.style.left).toMatch(/px$/);
       expect(getComputedStyle(label).top).toBe("0px");
       expect(getComputedStyle(label).transform).toBe("none");
-      // 24px hit area minus 5px rail and 4px bottom inset.
+      // 24px rail box minus 5px rail and 4px bottom inset.
       expect(parseFloat(rail.style.top) + 15).toBe(Math.max(16, label.offsetHeight, label.scrollHeight) + 4);
       expect(parseFloat(row.style.minHeight)).toBeGreaterThanOrEqual(parseFloat(rail.style.top) + 24);
     }
@@ -376,23 +373,24 @@ describe("career timeline UI", () => {
     employerRows.forEach((row) => {
       expect(parseFloat(getComputedStyle(row).minHeight)).toBeGreaterThanOrEqual(28);
       expect(parseFloat(getComputedStyle(row).minHeight)).toBeLessThanOrEqual(32);
-      expect(row.querySelectorAll("button")).toHaveLength(1);
+      expect(row.querySelectorAll("[data-employer-label]")).toHaveLength(1);
     });
   });
 
-  it("keeps employers visually secondary and role segments easy to activate", () => {
+  it("keeps employers visually secondary and role segments static", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
-    const employer = within(career).getByRole("button", { name: "Nitor details" });
-    const segment = career.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
+    const employer = career.querySelector('[data-employer-id="nitor"] [data-employer-label]')!;
+    const segment = career.querySelector<HTMLElement>('[data-role-rail="nitor_current"]')!;
     const label = segment.parentElement!.querySelector("span")!;
     expect(parseFloat(getComputedStyle(employer).fontSize)).toBeGreaterThanOrEqual(12);
     expect(getComputedStyle(employer).fontWeight).toBe("700");
-    expect(parseFloat(getComputedStyle(segment).height)).toBeGreaterThanOrEqual(24);
+    expect(parseFloat(getComputedStyle(segment).height)).toBe(24);
+    expect(segment).toHaveAttribute("role", "img");
     expect(within(career).queryByRole("button", { name: /Education/ })).not.toBeInTheDocument();
   });
 
-  it("groups repeated role titles within employers and opens the exact assignment in roles-only mode", () => {
+  it("groups repeated role titles within employers without adding rail actions", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const repeatedRows = Array.from(career.querySelectorAll<HTMLElement>('[data-role-row="Full-stack Developer"]'));
@@ -401,9 +399,9 @@ describe("career timeline UI", () => {
     fireEvent.click(within(career).getByRole("checkbox", { name: "Employers" }));
     const sharedRow = career.querySelector('[data-role-row="Full-stack Developer"]')!;
     expect(sharedRow.querySelectorAll("[data-role-rail]")).toHaveLength(5);
-    const nitorSegment = sharedRow.querySelector<HTMLButtonElement>('[data-role-rail="nitor_current"]')!;
-    fireEvent.click(nitorSegment);
-    expect(screen.getByRole("dialog", { name: "Nitor" })).toHaveTextContent("Full-stack development with a focus on architecture and AI.");
+    const nitorSegment = sharedRow.querySelector<HTMLElement>('[data-role-rail="nitor_current"]')!;
+    expect(nitorSegment).toHaveAttribute("role", "img");
+    expect(nitorSegment).toHaveAccessibleName("Full-stack Developer at Nitor");
   });
 
   it("uses a dedicated IT accent instead of the text color", () => {
@@ -431,7 +429,7 @@ describe("career timeline UI", () => {
     expect(career.querySelector('[data-employer-id="nitor"]')).toHaveAttribute("data-domain", "it");
   });
 
-  it("removes education and focus controls while retaining career placement and details", () => {
+  it("removes education and focus controls while retaining static career placement", () => {
     renderCombinedCareer();
     const career = screen.getByRole("region", { name: "Career" });
     const recent = screen.getByRole("heading", { name: "Recent work" }).closest("section")!;
@@ -442,56 +440,34 @@ describe("career timeline UI", () => {
     expect(within(career).queryByRole("checkbox", { name: "Areas of focus" })).not.toBeInTheDocument();
     expect(within(career).queryByRole("button", { name: /Education/ })).not.toBeInTheDocument();
     expect(career.querySelector('#career-education')).toBeNull();
-    expect(within(career).getAllByRole("button", { name: / details$/ })).toHaveLength(9);
     expect(career.querySelectorAll('[data-role-rail]')).toHaveLength(14);
-    fireEvent.click(within(career).getByRole("button", { name: "Nitor details" }));
-    expect(screen.getByRole("dialog")).toHaveTextContent("Architecture & AI");
+    expect(career.querySelectorAll("button, details, dialog")).toHaveLength(0);
+    expect(career.querySelectorAll("[data-employer-label]")).toHaveLength(9);
   });
 
-  it("exposes all employer roles in one date-free dialog and restores focus after Escape", () => {
+  it("keeps grouped employer headings static while retaining canonical hidden assignment details", () => {
     renderCombinedCareer();
-    const opener = screen.getByRole("button", { name: "Nitor details" });
-    opener.focus();
-    fireEvent.click(opener);
-    const dialog = screen.getByRole("dialog", { name: "Nitor" });
-    expect(dialog).toHaveAttribute("aria-describedby", "career-dialog-description");
-    expect(within(dialog).getAllByRole("button", { name: /Full-stack Developer/ })).toHaveLength(1);
-    fireEvent.click(within(dialog).getByRole("button", { name: /^Full-stack Developer/ }));
-    expect(within(dialog).getByText("Full-stack development with a focus on architecture and AI.")).toHaveAttribute("id", "career-dialog-description");
-    expect(dialog.textContent).not.toMatch(/\b20\d{2}\b|VR LOGISTICS|HSL|Aidon|Capgemini/i);
-    const close = within(dialog).getByRole("button", { name: "Close" });
-    const role = within(dialog).getByRole("button", { name: /^Full-stack Developer/ });
-    close.focus();
-    fireEvent.keyDown(close, { key: "Tab" });
-    expect(role).toHaveFocus();
-    fireEvent.keyDown(role, { key: "Tab", shiftKey: true });
-    expect(close).toHaveFocus();
-    fireEvent.keyDown(dialog, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Nitor details" })).toHaveFocus();
-  });
-
-  it("keeps all fourteen distinct role selectors and only confirmed concurrency links", () => {
-    renderCombinedCareer();
-    const roleIds = new Set<string>();
-    for (const employerButton of screen.getAllByRole("button", { name: / details$/i })) {
-      fireEvent.click(employerButton);
-      const dialog = screen.getByRole("dialog");
-      dialog.querySelectorAll<HTMLButtonElement>("[data-role-id]").forEach((button) => roleIds.add(button.dataset.roleId!));
-      fireEvent.keyDown(dialog, { key: "Escape" });
+    const career = screen.getByRole("region", { name: "Career" });
+    const headings = career.querySelectorAll<HTMLElement>("[data-employer-label]");
+    expect(headings).toHaveLength(9);
+    for (const employer of careerData.employers) {
+      const heading = [...headings].find((node) => node.textContent === employer.label)!;
+      expect(heading.tagName).toBe("SPAN");
+      expect(heading.closest("[data-employer-id]")).toHaveAttribute("data-start-month");
     }
-    expect(roleIds.size).toBe(14);
-    fireEvent.click(screen.getByRole("button", { name: "Solidabis details" }));
-    const solidabis = screen.getByRole("dialog", { name: "Solidabis" });
-    const duplicateTitles = within(solidabis).getAllByRole("button", { name: /^Full-stack Developer/ });
-    expect(duplicateTitles).toHaveLength(2);
-    expect(duplicateTitles[0].getAttribute("aria-label")).not.toBe(duplicateTitles[1].getAttribute("aria-label"));
-    fireEvent.keyDown(solidabis, { key: "Escape" });
-    fireEvent.click(screen.getByRole("button", { name: "twoday details" }));
-    const dialog = screen.getByRole("dialog", { name: "twoday" });
-    const selectors = within(dialog).getAllByRole("button").filter((button) => button.hasAttribute("data-role-id"));
-    expect(selectors).toHaveLength(4);
-    fireEvent.click(within(dialog).getByRole("button", { name: /^Team Lead/ }));
-    expect(within(dialog).getByText("Alongside Full-stack Developer, Technical Product Owner")).toBeVisible();
+    expect(careerData.assignments.find(({ id }) => id === "nitor_current")?.description).toBe("Full-stack development with a focus on architecture and AI.");
+    expect(careerData.assignments.find(({ id }) => id === "nitor_current")?.focusDetail).toBe("Architecture & AI");
+    expect(career.querySelectorAll("button, details, dialog")).toHaveLength(0);
+  });
+
+  it("keeps all fourteen static role rails and only confirmed concurrency links", () => {
+    renderCombinedCareer();
+    const career = screen.getByRole("region", { name: "Career" });
+    const rails = career.querySelectorAll<HTMLElement>("[data-role-rail]");
+    expect(rails).toHaveLength(14);
+    expect(new Set([...rails].map((rail) => rail.dataset.roleRail)).size).toBe(14);
+    expect([...rails].every((rail) => rail.getAttribute("role") === "img" && !!rail.getAttribute("aria-label"))).toBe(true);
+    expect(careerData.concurrentAssignments).toHaveLength(3);
+    expect(career.querySelectorAll("button, details, dialog")).toHaveLength(0);
   });
 });
