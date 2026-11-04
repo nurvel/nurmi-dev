@@ -11,28 +11,40 @@ const routes = [
 const root = process.cwd();
 const fileFor = (route: string) => path.join(root, "public", route, "index.html");
 
-describe("planned Drive pilot disclosure", () => {
-  it.each(routes.slice(1))("keeps the pilot inactive and accurately bounded at %s", (route) => {
-    const html = fs.readFileSync(fileFor(route), "utf8");
-    const document = new DOMParser().parseFromString(html, "text/html");
-    const section = document.querySelector('section[aria-labelledby="drive-pilot"]');
-    expect(section, "Missing planned-pilot disclosure").not.toBeNull();
+describe("owner-only on-demand Drive disclosure", () => {
+  it.each(routes.slice(1))("distinguishes optional tools, broad scope and activation at %s", (route) => {
+    const document = new DOMParser().parseFromString(fs.readFileSync(fileFor(route), "utf8"), "text/html");
+    const section = document.querySelector('section[aria-labelledby="drive-tools"]');
+    expect(section, "Missing on-demand Drive disclosure").not.toBeNull();
     const text = section!.textContent!.replace(/\s+/g, " ").trim();
-
-    expect(text).toContain("not activated");
+    expect(text).toMatch(/when enabled/i);
     expect(text).toContain("all files accessible to the account");
-    expect(text).toContain("does not grant write");
-    expect(text).toMatch(/before activation/i);
     expect(text).toContain("owner");
-    expect(text).toContain("local");
-    expect(section!.querySelector("code")?.textContent).toBe("https://www.googleapis.com/auth/drive.readonly");
+    expect(text).toContain("Publication does not activate");
+    expect([...section!.querySelectorAll("code")].map((node) => node.textContent)).toContain("https://www.googleapis.com/auth/drive");
+    expect(text).not.toMatch(/tool is active|pilot is not activated/i);
+
+    const history = document.querySelector('section[aria-labelledby="drive-read-history"]')?.textContent;
+    expect(history).toContain("earlier local-only read pilot");
+    expect(history).toContain("https://www.googleapis.com/auth/drive.readonly");
+    expect(history).toContain("does not grant write");
 
     if (route.endsWith("/privacy/")) {
-      expect(text).toContain("file names, contents and account metadata must not be supplied to a cloud model");
-      expect(text).toContain("operational pass/fail results");
+      expect(text).toContain("OpenAI");
+      expect(text).toContain("individually requested task");
+      expect(text).toContain("conversation history");
+      expect(text).toContain("not been verified");
+      expect(text).toContain("before transferring Drive data");
+      expect(text).toContain("does not promise automatic deletion");
       expect(text).toContain("encrypted credential storage");
-      expect(text).toContain("logging and error output");
-      expect(text).toContain("not a claim that these checks have already passed");
+    }
+    if (route === "/docs/integrations/google/") {
+      expect(text).toContain("deletion and sharing");
+      expect(text).toContain("1 MiB");
+      expect(text).toContain("named copies");
+      expect(text).toContain("inherited");
+      expect(document.body.textContent).toContain("https://www.googleapis.com/auth/webmasters.readonly");
+      expect(document.body.textContent).toContain("https://www.googleapis.com/auth/tagmanager.readonly");
     }
   });
 });
