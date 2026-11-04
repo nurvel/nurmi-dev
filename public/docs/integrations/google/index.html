@@ -14,14 +14,21 @@
   <main id="content">
 
     <h1>Aito Nurmi Integrations</h1>
-    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its currently approved Google Search Console and Google Tag Manager connections.</p>
+    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its current Google Search Console and Google Tag Manager connections and the owner's separately approved preparation of a local Drive read pilot.</p>
 <h2>Purpose and users</h2>
 <p>The application is a local integration used by the owner and an authorized operator. It reads search performance data from approved Search Console properties and account and container information from Tag Manager for reporting and technical checks.</p>
 <p>Kauneushoitola Hanna (KHH) is the first reference use case. KHH is a user of the integration, not its permanent application name.</p>
 <p>The application does not provide public registration. The Google account user authorizes access through Google's consent screen. Ownership of Google resources does not transfer to the integration.</p>
 <h2>Google permissions</h2>
 <ul><li>Search Console: <code>https://www.googleapis.com/auth/webmasters.readonly</code></li><li>Tag Manager: <code>https://www.googleapis.com/auth/tagmanager.readonly</code></li></ul>
-<p>These are read-only permissions. They do not permit editing or publishing Tag Manager configurations. This description does not cover GA4, Google Ads, Gmail, Drive or other services or providers. A broader application name does not enable additional integrations or permissions.</p>
+<p>These are read-only permissions. They do not permit editing or publishing Tag Manager configurations. Apart from the planned Drive pilot below, this description does not cover GA4, Google Ads, Gmail or other services or providers. A broader application name does not enable additional integrations or permissions.</p>
+<section aria-labelledby="drive-pilot">
+<h2 id="drive-pilot">Planned owner-only local Drive read pilot</h2>
+<p>The owner has approved preparation of a local Drive read pilot for the owner's assistant only. The pilot is not activated. It is not available for public registration or other assistant profiles.</p>
+<p>The proposed permission is <code>https://www.googleapis.com/auth/drive.readonly</code>. It would cover all files accessible to the account, not just a selected folder. It does not grant write, delete or sharing rights. The first test is further limited to one harmless file selected by the owner; that operational limit is not a narrower Google permission.</p>
+<p>Before activation, the operator must verify secure credential storage and the permitted data path. The owner must then select the intended Google account, complete Google's consent and choose the test file. Publishing this description does not complete any of those steps, enable a Drive connection or authorize a Gmail connection, backup job or change to the existing integrations.</p>
+<p>The planned pilot permits a local read test, not general cloud-model analysis of Drive files. Its data-handling conditions are described in the Privacy Policy below.</p>
+</section>
 <h2>Managing authorization</h2>
 <p>You can revoke authorization in <a href="https://myaccount.google.com/connections">your Google account's connections settings</a>. Continued access depends on valid authorization and Google's conditions. This page does not guarantee an uninterrupted connection.</p>
 <p class="notice">Publishing these documents or changing the application's name does not demonstrate Google OAuth Production status, Google verification or production readiness.</p>
