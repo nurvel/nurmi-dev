@@ -11,6 +11,32 @@ const routes = [
 const root = process.cwd();
 const fileFor = (route: string) => path.join(root, "public", route, "index.html");
 
+describe("planned Drive pilot disclosure", () => {
+  it.each(routes.slice(1))("keeps the pilot inactive and accurately bounded at %s", (route) => {
+    const html = fs.readFileSync(fileFor(route), "utf8");
+    const document = new DOMParser().parseFromString(html, "text/html");
+    const section = document.querySelector('section[aria-labelledby="drive-pilot"]');
+    expect(section, "Missing planned-pilot disclosure").not.toBeNull();
+    const text = section!.textContent!.replace(/\s+/g, " ").trim();
+
+    expect(text).toContain("not activated");
+    expect(text).toContain("all files accessible to the account");
+    expect(text).toContain("does not grant write");
+    expect(text).toMatch(/before activation/i);
+    expect(text).toContain("owner");
+    expect(text).toContain("local");
+    expect(section!.querySelector("code")?.textContent).toBe("https://www.googleapis.com/auth/drive.readonly");
+
+    if (route.endsWith("/privacy/")) {
+      expect(text).toContain("file names, contents and account metadata must not be supplied to a cloud model");
+      expect(text).toContain("operational pass/fail results");
+      expect(text).toContain("encrypted credential storage");
+      expect(text).toContain("logging and error output");
+      expect(text).toContain("not a claim that these checks have already passed");
+    }
+  });
+});
+
 // These pages deliberately do not boot the About SPA or its tracking code.
 describe("public documentation", () => {
   it.each(routes)("serves a standalone noindex document at %s", (route, title) => {
