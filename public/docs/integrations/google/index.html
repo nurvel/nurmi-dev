@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="The purpose, read-only integrations and optional owner-only Drive tools of Aito Nurmi Integrations.">
+  <meta name="description" content="The Google integration purposes, optional Drive tools and planned owner-only Gmail, Calendar and Tasks connections of Aito Nurmi Integrations.">
   <title>Aito Nurmi Integrations | nurmi.dev</title>
   <link rel="canonical" href="https://nurmi.dev/docs/integrations/google/">
   <link rel="stylesheet" href="/docs/styles.css">
@@ -14,14 +14,14 @@
   <main id="content">
 
     <h1>Aito Nurmi Integrations</h1>
-    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its Google Search Console and Google Tag Manager connections, the earlier local Drive read pilot and a separately enabled, owner-only Drive tool.</p>
+    <p><strong>Aito Nurmi Integrations</strong> is the OAuth application used for the owner's Google integrations. This page covers its Google Search Console and Google Tag Manager connections, the earlier local Drive read pilot, a separately enabled owner-only Drive tool and planned owner-only Gmail, Calendar and Tasks connections.</p>
 <h2>Purpose and users</h2>
 <p>The application is a local integration used by the owner and an authorized operator. It reads search performance data from approved Search Console properties and account and container information from Tag Manager for reporting and technical checks.</p>
 <p>Kauneushoitola Hanna (KHH) is the first reference use case. KHH is a user of the integration, not its permanent application name.</p>
 <p>The application does not provide public registration. The Google account user authorizes access through Google's consent screen. Ownership of Google resources does not transfer to the integration.</p>
 <h2>Google permissions</h2>
 <ul><li>Search Console: <code>https://www.googleapis.com/auth/webmasters.readonly</code></li><li>Tag Manager: <code>https://www.googleapis.com/auth/tagmanager.readonly</code></li></ul>
-<p>These Search Console and Tag Manager permissions remain read-only. They do not permit editing or publishing Tag Manager configurations. Apart from the separate Drive use below, this description does not cover GA4, Google Ads, Gmail or other integrations. A broader application name does not enable additional integrations or permissions.</p>
+<p>These Search Console and Tag Manager permissions remain read-only. They do not permit editing or publishing Tag Manager configurations. The separate Drive and planned personal-service uses are described below; this description does not cover GA4, Google Ads or other integrations. A broader application name does not enable additional integrations or permissions.</p>
 <section aria-labelledby="drive-read-history">
 <h2 id="drive-read-history">Earlier local-only Drive read pilot</h2>
 <p>The earlier local-only read pilot completed an owner-selected operational read test using <code>https://www.googleapis.com/auth/drive.readonly</code>. That permission does not grant write, delete or sharing rights. The pilot returned only pass/fail results to the assistant, not file names or contents. Its narrow local-only handling is historical and does not authorize the separate tool below.</p>
@@ -32,6 +32,18 @@
 <p>Allowed operations are narrower than the Google permission: find and inspect metadata, download selected files to private local copies, create folders, create or edit supported files, rename or move one file, and create named copies as checkpoints. Initial editing supports UTF-8 text files and Google Docs text, with a 1 MiB input limit. Sheets/Slides content editing, folder moves and shared-drive moves are not supported in this initial tool. Metadata search coverage and revision availability must be reported honestly.</p>
 <p>Checkpoint copies have their own file IDs and are separate from Google's automatically managed revision history; they are not named native revisions or a promise of permanent history. The scope can technically permit deletion and sharing, but deletion, trashing, sharing and ownership changes are not supported tool operations. A move can change inherited access through the destination folder and requires explicit acknowledgment.</p>
 <p>Only information needed for an individually requested task may be supplied to the owner's Hermes conversation and its OpenAI model service, under the separate processing conditions in the Privacy Policy. There is no automated whole-Drive scan. Publication does not activate the tool, grant Google permissions, verify provider settings or certify compliance. The operator must verify secure storage and the permitted data path before consent and use.</p>
+</section>
+<section aria-labelledby="personal-tools">
+<h2 id="personal-tools">Planned owner-only Gmail, Calendar and Tasks connections</h2>
+<p>When separately enabled by the owner's Google consent and operational checks, these connections are for the owner's personal assistant and an individually requested task, not public registration, other assistant profiles or background monitoring. Keep is excluded.</p>
+<ul>
+<li>Gmail: <code>https://www.googleapis.com/auth/gmail.readonly</code> for requested mailbox search and message reading. This is mailbox-wide access, not a message-only grant. The separate Gmail credential must grant only this permission; sending, modifying, labelling, archiving and deleting email are not authorized.</li>
+<li>Calendar: <code>https://www.googleapis.com/auth/calendar.events</code> for reading, creating and editing accessible events, plus <code>https://www.googleapis.com/auth/calendar.calendarlist.readonly</code> to select calendars. This does not authorize calendar creation, sharing or access-control administration.</li>
+<li>Tasks: <code>https://www.googleapis.com/auth/tasks</code> for reading, creating and editing Google Tasks.</li>
+</ul>
+<p>The Calendar and Tasks permissions technically permit event and task deletion, but the approved operations do not authorize deletion, clearing lists, bulk changes or unsolicited invitations and notifications. Each actual creation or edit requires a specific owner request and target; granting a permission is not a request to change existing data.</p>
+<p>Only information necessary for an individually requested task may be supplied to the owner's Hermes conversation and its OpenAI model service, subject to the Privacy Policy and a check of provider data-use suitability. There is no approval to scan the mailbox, calendars or tasks automatically or to send their data to other recipients.</p>
+<p>Publication does not activate these connections or prove that creation and editing tools are implemented or live-tested. Exact account and granted scopes, secure credential storage, persistence, refresh and the intended consumer must be checked before use. Gmail and the Calendar/Tasks credential must remain separate from each other and from Drive; clients within one Google application do not provide independent app-level revocation.</p>
 </section>
 <h2>Managing authorization</h2>
 <p>You can revoke authorization in <a href="https://myaccount.google.com/connections">your Google account's connections settings</a>. Continued access depends on valid authorization and Google's conditions. This page does not guarantee an uninterrupted connection.</p>
