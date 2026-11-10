@@ -14,11 +14,11 @@
   <main id="content">
 
     <h1>Terms of Use</h1>
-    <p>These Terms of Use describe the limited use of <strong>Aito Nurmi Integrations</strong> for its Google Search Console and Tag Manager connections, the earlier local-only Drive read pilot and a separately enabled, optional owner-only Drive tool.</p>
+    <p>These Terms of Use describe the limited use of <strong>Aito Nurmi Integrations</strong> for its Google Search Console and Tag Manager connections, the earlier local-only Drive read pilot, a separately enabled optional owner-only Drive tool and planned personal Gmail, Calendar and Tasks connections.</p>
 <h2>Users and purpose</h2>
 <p>The integration is a tool for the owner and an authorized operator. It does not provide public registration or a paid subscription. A user may authorize only Google resources for which they have the necessary authority.</p>
 <h2>Permissions and ownership</h2>
-<p>Search Console and Tag Manager use read-only permissions. They do not permit editing or publishing in Tag Manager or transfer ownership of a Google account, site or container. The separate optional Drive permission is described below; the application name does not authorize additional providers, APIs or permissions.</p>
+<p>Search Console and Tag Manager use read-only permissions. They do not permit editing or publishing in Tag Manager or transfer ownership of a Google account, site or container. The separate optional Drive and planned personal-service permissions are described below; the application name does not authorize additional providers, APIs or permissions.</p>
 <section aria-labelledby="drive-read-history">
 <h2 id="drive-read-history">Earlier local-only Drive read pilot</h2>
 <p>The earlier local-only read pilot used <code>https://www.googleapis.com/auth/drive.readonly</code> for one owner-selected operational test. That permission does not grant write, delete or sharing rights. Its pass/fail-only local test did not authorize broader content processing or writing.</p>
@@ -29,6 +29,13 @@
 <p>The broad Google scope can technically permit deletion and sharing. The tool does not support deletion, trashing, sharing, ownership changes, bulk changes, background collection or other assistant profiles. A move can change inherited access through the destination folder and needs explicit acknowledgment. Initial editing is limited to UTF-8 text files and Google Docs text with a 1 MiB input limit; unsupported formats and folder/shared-drive moves must be rejected clearly.</p>
 <p>Only information needed for an individually requested task may be supplied to the owner's Hermes conversation and its OpenAI model service, subject to the Privacy Policy and a check of provider data-use suitability before transfer. A request to manipulate a file is not blanket permission to scan Drive, train a model, publish its content or send it to other recipients.</p>
 <p>Publication does not activate the tool, grant permissions or establish that an account is connected. The operator must verify secure credential handling, the permitted data path, exact scope/account, persistence and refresh before use. The owner personally completes Google's consent. These pages do not promise uninterrupted service, permanent version history or automatic deletion.</p>
+</section>
+<section aria-labelledby="personal-tools">
+<h2 id="personal-tools">Planned personal Gmail, Calendar and Tasks boundary</h2>
+<p>When separately enabled, Gmail permits only requested search and message reading; it does not authorize sending or modifying email. Calendar and Tasks are for reading, creating and editing data for an individually requested task. Their broad write permissions do not authorize deletion, clearing lists, bulk changes, calendar sharing or access-control administration. Keep is excluded.</p>
+<p>Each actual change requires a specific owner request and target. Invitations, participant notifications, recurring-event edits and effects on other people must be resolved before executing a change; an authentication grant alone is not permission to perform those actions. An uncertain write must be reconciled against its exact target before any retry.</p>
+<p>Only necessary task-specific data may be supplied to the owner's Hermes conversation and its OpenAI model service under the Privacy Policy and after checking provider data-use suitability. This is not approval for automatic mailbox, calendar or task scanning, public disclosure or other external recipients.</p>
+<p>Publication does not activate these connections, verify the owner's account, or prove that creating and editing tools are implemented or live-tested. Exact grants, secure storage, persistent reload, refresh and the intended consumer must pass operational checks. The owner personally completes Google's account selection and consent. Existing Drive grants must remain separate; separate clients within the same Google application do not isolate app-wide revocation or provider policy effects.</p>
 </section>
 <h2>Connection availability and results</h2>
 <p>Google authorization can be revoked. Revoked or otherwise invalid authorization may require fresh consent. An uninterrupted connection, a particular retention period or automatic deletion is not guaranteed.</p>

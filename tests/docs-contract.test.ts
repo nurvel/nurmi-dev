@@ -49,6 +49,38 @@ describe("owner-only on-demand Drive disclosure", () => {
   });
 });
 
+describe("planned owner-only Gmail, Calendar and Tasks disclosure", () => {
+  it.each(routes.slice(1))("keeps personal use conditional and request-scoped at %s", (route) => {
+    const document = new DOMParser().parseFromString(fs.readFileSync(fileFor(route), "utf8"), "text/html");
+    const section = document.querySelector('section[aria-labelledby="personal-tools"]');
+    expect(section, "Missing personal-service disclosure").not.toBeNull();
+    const text = section!.textContent!.replace(/\s+/g, " ").trim();
+    expect(text).toMatch(/when separately enabled/i);
+    for (const service of ["Gmail", "Calendar", "Tasks"]) expect(text).toContain(service);
+    expect(text).toContain("individually requested task");
+    expect(text).toContain("OpenAI");
+    expect(text).toContain("Publication does not activate");
+    expect(text).toContain("Keep is excluded");
+    expect(text).not.toMatch(/connections are active|permanent access|guaranteed renewal/i);
+    if (route === "/docs/integrations/google/") {
+      expect([...section!.querySelectorAll("code")].map((node) => node.textContent)).toEqual([
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+        "https://www.googleapis.com/auth/tasks",
+      ]);
+      expect(text).toContain("technically permit event and task deletion");
+      expect(text).toContain("do not authorize deletion");
+    }
+    if (route.endsWith("/privacy/")) {
+      expect(text).toContain("before transferring personal-service data");
+      expect(text).toContain("have not been verified");
+      expect(text).toContain("no plaintext token-file fallback");
+      expect(text).toContain("conversation history");
+    }
+  });
+});
+
 // These pages deliberately do not boot the About SPA or its tracking code.
 describe("public documentation", () => {
   it.each(routes)("serves a standalone noindex document at %s", (route, title) => {
